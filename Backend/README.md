@@ -220,3 +220,96 @@ curl -X POST http://localhost:4000/users/login \
 - The login endpoint verifies user credentials before issuing a JWT.
 - The JWT is used for authenticated future requests.
 - The endpoint accepts JSON data in the request body.
+
+---
+
+## Backend Route Flow Overview
+
+This diagram shows the full flow for all main user routes in the backend.
+
+```mermaid
+flowchart TD
+    A[Client Request] --> B{Route}
+
+    B -->|POST /users/register| C[Validate request body]
+    C --> D{Input valid?}
+    D -- No --> E[400 Bad Request]
+    D -- Yes --> F[Check if email already exists]
+    F --> G{User exists?}
+    G -- Yes --> H[409 / error response]
+    G -- No --> I[Hash password]
+    I --> J[Create user in MongoDB]
+    J --> K[Generate JWT token]
+    K --> L[Return user + token]
+
+    B -->|POST /users/login| M[Validate email and password]
+    M --> N{Input valid?}
+    N -- No --> O[400 Bad Request]
+    N -- Yes --> P[Find user by email]
+    P --> Q{User found?}
+    Q -- No --> R[401 Invalid email or password]
+    Q -- Yes --> S[Compare password hash]
+    S --> T{Password valid?}
+    T -- No --> R
+    T -- Yes --> U[Generate JWT token]
+    U --> V[Return user + token]
+
+    B -->|GET /users/profile| W[Read Authorization header or cookie]
+    W --> X[Run auth middleware]
+    X --> Y[Verify JWT signature]
+    Y --> Z{Token valid?}
+    Z -- No --> AA[401 Invalid token]
+    Z -- Yes --> AB[Load user by ID]
+    AB --> AC[Attach req.user]
+    AC --> AD[Return user profile]
+
+    B -->|GET /users/logout| AE[Read current user token]
+    AE --> AF[Clear cookie / session data]
+    AF --> AG[Optional blacklist token]
+    AG --> AH[Return logout success]
+
+    subgraph AuthChain[Protected Route Flow]
+        X --> Y --> AB --> AC --> AD
+    end
+
+    subgraph AppArchitecture[Backend Structure]
+        BA[app.js] --> BB[routes/user.routes.js]
+        BB --> BC[controllers/user.controller.js]
+        BC --> BD[services/user.service.js]
+        BD --> BE[models/user.model.js]
+        BE --> BF[MongoDB]
+    end
+```
+
+### Route Summary
+
+| Route             | Method | Purpose                                       | Auth Required |
+| ----------------- | ------ | --------------------------------------------- | ------------- |
+| `/users/register` | POST   | Create a new user account                     | No            |
+| `/users/login`    | POST   | Log in a user and return JWT                  | No            |
+| `/users/profile`  | GET    | Fetch logged-in user profile                  | Yes           |
+| `/users/logout`   | GET    | Log the user out and clean session/token data | Yes           |
+
+### Main Request Flow
+
+```text
+Client
+  -> app.js
+  -> routes/user.routes.js
+  -> controllers/user.controller.js
+  -> services/user.service.js
+  -> models/user.model.js
+  -> MongoDB
+  -> response payload / JWT token
+```
+
+### Protected Route Security Flow
+
+```text
+Request
+  -> Authorization Header or Cookie
+  -> authUser middleware
+  -> JWT verification
+  -> req.user attached
+  -> controller executes protected logic
+```

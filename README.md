@@ -1,27 +1,29 @@
 # Triply
 
-RideFlow is a full-stack ride booking platform built with the MERN stack. It supports rider and driver workflows, user authentication, booking management, fare calculation, ride tracking, and an admin dashboard.
+Triply is a backend-first ride booking platform built with Node.js, Express, MongoDB, and JWT authentication. The current implementation focuses on user registration, login, profile access, and protected route security.
 
 ## Overview
 
-Triply is designed to simplify the process of booking rides, assigning drivers, and managing trip activity in a modern web application.
+This project is designed to support a ride-sharing workflow where users can register, log in, receive a JWT token, and access protected profile endpoints. The backend is structured as a clean MVC-like flow using Express routes, controllers, services, and Mongoose models.
 
 ## Features
 
-- Rider registration and authentication
-- Driver and passenger role flows
-- Ride booking and trip creation
-- Fare estimation and trip cost logic
-- Driver assignment and ride status tracking
-- Admin overview for platform management
-- REST API backend for handling user and trip operations
+- User registration with validation
+- User login with password verification
+- JWT generation and authentication
+- Protected profile route
+- Logout flow with token blacklisting support
+- MongoDB connection with Mongoose
+- Express API server on port 4000
 
 ## Tech Stack
 
-- Frontend: React / Next.js / other client app stack
 - Backend: Node.js, Express.js
 - Database: MongoDB with Mongoose
-- Authentication: JWT-based authentication
+- Authentication: JWT (jsonwebtoken)
+- Validation: express-validator
+- Cookie handling: cookie-parser
+- Environment management: dotenv
 
 ## Project Structure
 
@@ -32,28 +34,34 @@ Triply/
 │   ├── app.js
 │   ├── server.js
 │   ├── package.json
-│   ├── README.md
 │   ├── controllers/
+│   │   └── user.controller.js
 │   ├── db/
+│   │   └── db.js
+│   ├── middlewares/
+│   │   └── auth.middlewares.js
 │   ├── models/
+│   │   ├── user.model.js
+│   │   └── blacklistToken.model.js
 │   ├── routes/
-│   └── services/
+│   │   └── user.routes.js
+│   ├── services/
+│   │   └── user.service.js
+│   └── node_modules/
 └── Frontend/   (if added later)
 ```
 
-## Backend API
+## Backend API Routes
 
-The backend contains the user registration API and related route logic.
+The project currently exposes these user routes under `/users`.
 
-### User Registration Endpoint
+### 1) Register User
 
 - Method: POST
-- Route: /users/register
-- Description: Registers a new user account with full name, email, and password
+- Route: `/users/register`
+- Description: Creates a new user, hashes the password, and returns a JWT token.
 
-For full request and response details, see [Backend/README.md](Backend/README.md).
-
-## Example Request
+Request body:
 
 ```json
 {
@@ -62,40 +70,69 @@ For full request and response details, see [Backend/README.md](Backend/README.md
     "lastname": "Doe"
   },
   "email": "john@example.com",
-  "password": "secret123"
+  "password": "secret1234"
 }
 ```
 
-## API Workflow / Function Call Flow
+### 2) Login User
 
-The registration request follows this flow in the backend:
+- Method: POST
+- Route: `/users/login`
+- Description: Verifies the password and returns the user object and JWT token.
 
-1. The client sends a `POST` request to `/users/register`.
-2. The route in [Backend/routes/user.routes.js](Backend/routes/user.routes.js) receives the request and runs validation rules for:
-   - `fullname.firstname`(String)
-   - `fullname.lastname`(String)
-   - `email`(String)
-   - `password`(String)
-   - `token`(JWT token)
-3. The validated request is passed to the controller in [Backend/controllers/user.controller.js](Backend/controllers/user.controller.js).
-4. The controller calls `userModel.hashPassword(password)` to hash the password.
-5. The controller then calls `userService.createUser(...)` in [Backend/services/user.service.js](Backend/services/user.service.js).
-6. The service creates the new user document using the Mongoose model from [Backend/models/user.model.js](Backend/models/user.model.js).
-7. The controller generates a JWT token using `user.generateAuthToken()`.
-8. The API responds with `201 Created` and returns the created user plus the token.
+Request body:
 
-### High-Level Flow
-
-```text
-Client
-  -> app.js
-  \-> routes/user.routes.js
-  \-> controllers/user.controller.js
-  \-> services/user.service.js
-  \-> models/user.model.js
-  \-> MongoDB
-  \-> response with user + token
+```json
+{
+  "email": "john@example.com",
+  "password": "secret1234"
+}
 ```
+
+### 3) Get User Profile
+
+- Method: GET
+- Route: `/users/profile`
+- Description: Requires a valid JWT token.
+- Auth flow: `authUser` -> `authMiddleware` -> controller
+
+Headers:
+
+```http
+Authorization: Bearer <jwt_token>
+```
+
+### 4) Logout User
+
+- Method: GET
+- Route: `/users/logout`
+- Description: Clears the cookie and optionally blacklists the JWT token.
+
+## Authentication Flow
+
+The backend uses JWT-based authentication for protected routes.
+
+1. User logs in with `/users/login`.
+2. The server generates a JWT from the user id.
+3. The client sends the token in:
+   - the `Authorization` header as `Bearer <token>`, or
+   - a cookie named `token`
+4. The middleware in [Backend/middlewares/auth.middlewares.js](Backend/middlewares/auth.middlewares.js) checks the token.
+5. The token is verified using `jwt.verify(token, process.env.JWT_SECRET)`.
+6. The user is loaded from MongoDB and attached to `req.user`.
+7. The protected route is allowed to continue.
+
+## Function Flow
+
+An example request flow for registration looks like this:
+
+1. Client sends `POST /users/register`.
+2. Route validation runs in [Backend/routes/user.routes.js](Backend/routes/user.routes.js).
+3. Request goes to [Backend/controllers/user.controller.js](Backend/controllers/user.controller.js).
+4. Controller calls `userModel.hashPassword()` and `userService.createUser()`.
+5. User is saved into MongoDB using the schema in [Backend/models/user.model.js](Backend/models/user.model.js).
+6. JWT token is generated with `user.generateAuthToken()`.
+7. Response is returned with created user data and token.
 
 ## Local Setup
 
@@ -111,20 +148,32 @@ cd Backend
 npm install
 ```
 
-3. Start the backend server with Nodemon:
+3. Start MongoDB locally on port 27017.
+
+4. Start the backend with Nodemon:
 
 ```bash
 npx nodemon
 ```
 
-4. Use the API at:
+5. The server runs on:
 
 ```bash
 http://localhost:4000
 ```
 
-> Important: This project runs locally on port 4000, and the development server is started with `npx nodemon`.
+## Environment Variables
+
+Create a `.env` file inside the `Backend` folder with at least:
+
+```env
+PORT=4000
+JWT_SECRET=your_secret_key
+MONGO_URI=mongodb://localhost:27017/triply
+```
+
+> Note: The exact environment variable names may vary depending on the DB connection file in [Backend/db/db.js](Backend/db/db.js).
 
 ## Notes
 
-This project is currently in active backend development, with user registration being one of the core endpoints. More modules and frontend features can be added as the application grows.
+This project is currently in active backend development. The user auth flow and protected routes are the main working features at this stage, and more modules can be added later for rides, drivers, booking logic, and frontend integration.
