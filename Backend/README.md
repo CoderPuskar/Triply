@@ -41,7 +41,7 @@ The request body must be a JSON object in the following format:
 ### Example Request
 
 ```bash
-curl -X POST http://localhost:3000/users/register \
+curl -X POST http://localhost:4000/users/register \
   -H "Content-Type: application/json" \
   -d '{
     "fullname": {
@@ -106,3 +106,117 @@ curl -X POST http://localhost:3000/users/register \
 - The password is hashed before being saved to the database.
 - A JWT token is generated for the newly created user.
 - The endpoint requires JSON data in the request body.
+
+---
+
+## User Login Endpoint
+
+This backend exposes the user login endpoint at:
+
+- POST /users/login
+
+> Note: The router is mounted under `/users`, and the route file defines `/login`. So the complete endpoint is `/users/login`.
+
+### Description
+
+Authenticates an existing user by checking the email and password. If valid, the server returns the user details and a JWT token.
+
+### Request Method
+
+`POST`
+
+### Required Request Body
+
+The request body must be a JSON object in the following format:
+
+```json
+{
+  "email": "john@example.com",
+  "password": "secret123"
+}
+```
+
+### Validation Rules
+
+- `email`: required, must be a valid email address
+- `password`: required, minimum 6 characters
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:4000/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "secret123"
+  }'
+```
+
+### Success Response
+
+#### Status Code
+
+`200 OK`
+
+#### Response Body
+
+```json
+{
+  "user": {
+    "_id": "64a7b2d9f1c2d3e4f5a6b7c8",
+    "fullname": {
+      "firstname": "John",
+      "lastname": "Doe"
+    },
+    "email": "john@example.com"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Validation Error Response
+
+#### Status Code
+
+`400 Bad Request`
+
+#### Response Body
+
+```json
+{
+  "errors": [
+    {
+      "msg": "Invalid email address",
+      "param": "email",
+      "location": "body"
+    }
+  ]
+}
+```
+
+### Unauthorized Response
+
+#### Status Code
+
+`401 Unauthorized`
+
+#### Response Body
+
+```json
+{
+  "message": "Invalid email or password"
+}
+```
+
+### Status Codes Summary
+
+- `200` - User logged in successfully
+- `400` - Invalid input or validation failed
+- `401` - Invalid email or password
+- `500` - Server error while logging in
+
+### Notes
+
+- The login endpoint verifies user credentials before issuing a JWT.
+- The JWT is used for authenticated future requests.
+- The endpoint accepts JSON data in the request body.

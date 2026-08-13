@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     minlength: [6, "Email must be at least 6 characters long"],
     maxlength: 255,
-    },
+  },
   email: {
     type: String,
     required: true,
@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
     minlength: [6, "Email must be at least 6 characters long"],
     maxlength: 255,
   },
-    password: {
+  password: {
     type: String,
     required: true,
     select: false,
@@ -47,12 +47,14 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.methods.generateAuthToken = function () {
-  const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET)
+  const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: "1h",
+  });
   return token;
 };
 
 userSchema.methods.comparePassword = async function (password) {
-  return bcrypt.compare(password, this.password);
+  return await bcrypt.compare(password, this.password);
 };
 
 userSchema.statics.hashPassword = async function (password) {
