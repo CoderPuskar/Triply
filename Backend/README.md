@@ -225,7 +225,7 @@ curl -X POST http://localhost:4000/users/login \
 
 ## Backend Route Flow Overview
 
-This diagram shows the full flow for all main user routes in the backend.
+This diagram shows the full flow for all main user and captain routes in the backend.
 
 ```mermaid
 flowchart TD
@@ -236,7 +236,7 @@ flowchart TD
     D -- No --> E[400 Bad Request]
     D -- Yes --> F[Check if email already exists]
     F --> G{User exists?}
-    G -- Yes --> H[409 / error response]
+    G -- Yes --> H[400 / error response]
     G -- No --> I[Hash password]
     I --> J[Create user in MongoDB]
     J --> K[Generate JWT token]
@@ -268,16 +268,36 @@ flowchart TD
     AF --> AG[Optional blacklist token]
     AG --> AH[Return logout success]
 
+    B -->|POST /captains/register| CA[Validate request body]
+    CA --> CB{Input valid?}
+    CB -- No --> CC[400 Bad Request]
+    CB -- Yes --> CD[Check if email already exists]
+    CD --> CE{Captain exists?}
+    CE -- Yes --> CF[400 Captain already exist]
+    CE -- No --> CG[Hash password]
+    CG --> CH[Create captain in MongoDB]
+    CH --> CI[Generate JWT token]
+    CI --> CJ[Return captain + token]
+    CJ --> CK[201 Created]
+
     subgraph AuthChain[Protected Route Flow]
         X --> Y --> AB --> AC --> AD
     end
 
-    subgraph AppArchitecture[Backend Structure]
+    subgraph AppArchitecture[Backend Structure - Users]
         BA[app.js] --> BB[routes/user.routes.js]
         BB --> BC[controllers/user.controller.js]
         BC --> BD[services/user.service.js]
         BD --> BE[models/user.model.js]
         BE --> BF[MongoDB]
+    end
+
+    subgraph CaptainArchitecture[Backend Structure - Captains]
+        CA1[app.js] --> CA2[routes/captain.routes.js]
+        CA2 --> CA3[controllers/captain.controller.js]
+        CA3 --> CA4[services/captain.service.js]
+        CA4 --> CA5[models/captain.models.js]
+        CA5 --> CA6[MongoDB]
     end
 ```
 
@@ -313,3 +333,185 @@ Request
   -> req.user attached
   -> controller executes protected logic
 ```
+
+---
+
+## Captain Registration Endpoint
+
+This backend exposes the captain registration endpoint at:
+
+- POST /captains/register
+
+> Note: In the application code, the router is mounted under `/captains`, and the route file defines `/register`. So the complete endpoint is `/captains/register`.
+
+### Description
+
+Creates a new captain account with personal details and vehicle information. The request is validated before saving the captain. If valid, the server stores the captain and returns a JWT token.
+
+### Request Method
+
+`POST`
+
+### Required Request Body
+
+The request body must be a JSON object in the following format:
+
+```json
+{
+  "fullname": {
+    "firstname": "Rajesh",
+    "lastname": "Kumar"
+  },
+  "email": "rajesh.captain@example.com",
+  "password": "Captain@123",
+  "vehicle": {
+    "color": "Black",
+    "numberplate": "MH02AB1234",
+    "capacity": 4,
+    "vehicalType": "car"
+  }
+}
+```
+
+### Validation Rules
+
+- `fullname.firstname`: required, minimum 3 characters
+- `fullname.lastname`: optional, minimum 2 characters
+- `email`: required, must be a valid email address
+- `password`: required, minimum 6 characters
+- `vehicle.color`: required, minimum 3 characters
+- `vehicle.numberplate`: required, minimum 4 characters
+- `vehicle.capacity`: required, must be an integer ≥ 1
+- `vehicle.vehicalType`: required, must be one of: `car`, `bike`, `van`, `auto`
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:4000/captains/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fullname": {
+      "firstname": "Rajesh",
+      "lastname": "Kumar"
+    },
+    "email": "rajesh.captain@example.com",
+    "password": "Captain@123",
+    "vehicle": {
+      "color": "Black",
+      "numberplate": "MH02AB1234",
+      "capacity": 4,
+      "vehicalType": "car"
+    }
+  }'
+```
+
+### Success Response
+
+#### Status Code
+
+`201 Created`
+
+#### Response Body
+
+```json
+{
+  "captain": {
+    "_id": "64a7b2d9f1c2d3e4f5a6b7c9",
+    "fullname": {
+      "firstname": "Rajesh",
+      "lastname": "Kumar"
+    },
+    "email": "rajesh.captain@example.com",
+    "vehicle": {
+      "color": "Black",
+      "numberplate": "MH02AB1234",
+      "capacity": 4,
+      "vehicalType": "car"
+    },
+    "status": "active"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Validation Error Response
+
+#### Status Code
+
+`400 Bad Request`
+
+#### Response Body
+
+```json
+{
+  "errors": [
+    {
+      "msg": "Name is required",
+      "param": "fullname.firstname",
+      "location": "body"
+    },
+    {
+      "msg": "Valid email is required",
+      "param": "email",
+      "location": "body"
+    }
+  ]
+}
+```
+
+### Duplicate Email Response
+
+#### Status Code
+
+`400 Bad Request`
+
+#### Response Body
+
+```json
+{
+  "message": "Captain already exist"
+}
+```
+
+### Status Codes Summary
+
+- `201` - Captain successfully created
+- `400` - Invalid input, validation failed, or captain already exists
+- `500` - Server error while creating the captain
+
+### Notes
+
+- The password is hashed before being saved to the database.
+- A JWT token is generated for the newly created captain with 24-hour expiration.
+- The endpoint requires JSON data in the request body.
+- Captain email must be unique in the system.
+- Captain status defaults to "active".
+- Vehicle information is required and cannot be left empty.
+
+---
+
+## Vehicle Types
+
+The following vehicle types are supported for captains:
+
+| Type | Description        |
+| ---- | ------------------ |
+| car  | Standard car       |
+| bike | Motorcycle/Scooter |
+| van  | Van/Large vehicle  |
+| auto | Auto-rickshaw      |
+
+### Route Summary (Updated)
+
+| Route                | Method | Purpose                                       | Auth Required   |
+| -------------------- | ------ | --------------------------------------------- | --------------- |
+| `/users/register`    | POST   | Create a new user account                     | No              |
+| `/users/login`       | POST   | Log in a user and return JWT                  | No              |
+| `/users/profile`     | GET    | Fetch logged-in user profile                  | Yes             |
+| `/users/logout`      | GET    | Log the user out and clean session/token data | Yes             |
+| `/captains/register` | POST   | Create a new captain account                  | No              |
+| `/captains/login`    | POST   | Log in a captain and return JWT               | No (commented)  |
+| `/captains/profile`  | GET    | Fetch logged-in captain profile               | Yes (commented) |
+| `/captains/logout`   | GET    | Log the captain out                           | Yes (commented) |
+
+> Note: Captain login, profile, and logout endpoints are currently commented out. For full captain API documentation, see [CAPTAIN_API.md](CAPTAIN_API.md).

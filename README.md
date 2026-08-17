@@ -34,28 +34,36 @@ Triply/
 │   ├── app.js
 │   ├── server.js
 │   ├── package.json
+│   ├── README.md
+│   ├── CAPTAIN_API.md
 │   ├── controllers/
-│   │   └── user.controller.js
+│   │   ├── user.controller.js
+│   │   └── captain.controller.js
 │   ├── db/
 │   │   └── db.js
 │   ├── middlewares/
 │   │   └── auth.middlewares.js
 │   ├── models/
 │   │   ├── user.model.js
+│   │   ├── captain.models.js
 │   │   └── blacklistToken.model.js
 │   ├── routes/
-│   │   └── user.routes.js
+│   │   ├── user.routes.js
+│   │   └── captain.routes.js
 │   ├── services/
-│   │   └── user.service.js
+│   │   ├── user.service.js
+│   │   └── captain.service.js
 │   └── node_modules/
 └── Frontend/   (if added later)
 ```
 
 ## Backend API Routes
 
-The project currently exposes these user routes under `/users`.
+The project exposes user routes under `/users` and captain routes under `/captains`.
 
-### 1) Register User
+### User Routes
+
+#### 1) Register User
 
 - Method: POST
 - Route: `/users/register`
@@ -63,7 +71,7 @@ The project currently exposes these user routes under `/users`.
 
 Request body:
 
-```json
+````json
 {
   "fullname": {
     "firstname": "John",
@@ -72,7 +80,7 @@ Request body:
   "email": "john@example.com",
   "password": "secret1234"
 }
-```
+```#
 
 ### 2) Login User
 
@@ -87,9 +95,9 @@ Request body:
   "email": "john@example.com",
   "password": "secret1234"
 }
-```
+````
 
-### 3) Get User Profile
+#### 3) Get User Profile
 
 - Method: GET
 - Route: `/users/profile`
@@ -102,7 +110,54 @@ Headers:
 Authorization: Bearer <jwt_token>
 ```
 
-### 4) Logout User
+#### 4) Logout User
+
+- Method: GET
+- Route: `/users/logout`
+- Description: Clears the cookie and optionally blacklists the JWT token.
+
+### Captain Routes
+
+For detailed captain API documentation, see [CAPTAIN_API.md](Backend/CAPTAIN_API.md).
+
+#### 1) Register Captain
+
+- Method: POST
+- Route: `/captains/register`
+- Description: Creates a new captain with personal and vehicle information, hashes the password, and returns a JWT token.
+
+Request body:
+
+```json
+{
+  "fullname": {
+    "firstname": "Rajesh",
+    "lastname": "Kumar"
+  },
+  "email": "rajesh.captain@example.com",
+  "password": "Captain@123",
+  "vehicle": {
+    "color": "Black",
+    "numberplate": "MH02AB1234",
+    "capacity": 4,
+    "vehicalType": "car"
+  }
+}
+```
+
+#### 2) Login Captain (Commented Out)
+
+- Method: POST
+- Route: `/captains/login`
+- Description: Verifies the password and returns the captain object and JWT token.
+
+#### 3) Get Captain Profile (Commented Out)
+
+- Method: GET
+- Route: `/captains/profile`
+- Description: Requires a valid JWT token.
+
+#### 4) Logout Captain (Commented Out)
 
 - Method: GET
 - Route: `/users/logout`
@@ -124,7 +179,9 @@ The backend uses JWT-based authentication for protected routes.
 
 ## Function Flow
 
-An example request flow for registration looks like this:
+### User Registration Flow
+
+An example request flow for user registration looks like this:
 
 1. Client sends `POST /users/register`.
 2. Route validation runs in [Backend/routes/user.routes.js](Backend/routes/user.routes.js).
@@ -133,6 +190,21 @@ An example request flow for registration looks like this:
 5. User is saved into MongoDB using the schema in [Backend/models/user.model.js](Backend/models/user.model.js).
 6. JWT token is generated with `user.generateAuthToken()`.
 7. Response is returned with created user data and token.
+
+### Captain Registration Flow
+
+An example request flow for captain registration looks like this:
+
+1. Client sends `POST /captains/register`.
+2. Route validation runs in [Backend/routes/captain.routes.js](Backend/routes/captain.routes.js).
+3. Validates all required fields: fullname, email, password, and vehicle details (color, numberplate, capacity, vehicalType).
+4. Request goes to [Backend/controllers/captain.controller.js](Backend/controllers/captain.controller.js).
+5. Controller checks if captain with that email already exists in MongoDB.
+6. If not, controller calls `captainService.registerCaptain()`.
+7. Service hashes the password using `captainModel.hashPasswrd()`.
+8. Captain is saved into MongoDB using the schema in [Backend/models/captain.models.js](Backend/models/captain.models.js).
+9. JWT token is generated with `captain.generateAuthToken()` (24-hour expiration).
+10. Response is returned with created captain data and token (201 Created).
 
 ## Local Setup
 
