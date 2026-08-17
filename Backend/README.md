@@ -31,12 +31,16 @@ The request body must be a JSON object in the following format:
 }
 ```
 
+
+
 ### Validation Rules
 
 - `fullname.firstname`: required, minimum 2 characters
 - `fullname.lastname`: required, minimum 2 characters
 - `email`: required, must be a valid email address
 - `password`: required, minimum 6 characters
+
+
 
 ### Example Request
 
@@ -53,7 +57,11 @@ curl -X POST http://localhost:4000/users/register \
   }'
 ```
 
+
+
 ### Success Response
+
+
 
 #### Status Code
 
@@ -75,7 +83,11 @@ curl -X POST http://localhost:4000/users/register \
 }
 ```
 
+
+
 ### Validation Error Response
+
+
 
 #### Status Code
 
@@ -95,11 +107,15 @@ curl -X POST http://localhost:4000/users/register \
 }
 ```
 
+
+
 ### Status Codes Summary
 
 - `201` - User successfully created
 - `400` - Invalid input or validation failed
 - `500` - Server error while creating the user
+
+
 
 ### Notes
 
@@ -109,6 +125,8 @@ curl -X POST http://localhost:4000/users/register \
 
 ---
 
+
+
 ## User Login Endpoint
 
 This backend exposes the user login endpoint at:
@@ -116,6 +134,8 @@ This backend exposes the user login endpoint at:
 - POST /users/login
 
 > Note: The router is mounted under `/users`, and the route file defines `/login`. So the complete endpoint is `/users/login`.
+
+
 
 ### Description
 
@@ -136,10 +156,14 @@ The request body must be a JSON object in the following format:
 }
 ```
 
+
+
 ### Validation Rules
 
 - `email`: required, must be a valid email address
 - `password`: required, minimum 6 characters
+
+
 
 ### Example Request
 
@@ -152,7 +176,11 @@ curl -X POST http://localhost:4000/users/login \
   }'
 ```
 
+
+
 ### Success Response
+
+
 
 #### Status Code
 
@@ -174,7 +202,11 @@ curl -X POST http://localhost:4000/users/login \
 }
 ```
 
+
+
 ### Validation Error Response
+
+
 
 #### Status Code
 
@@ -194,7 +226,11 @@ curl -X POST http://localhost:4000/users/login \
 }
 ```
 
+
+
 ### Unauthorized Response
+
+
 
 #### Status Code
 
@@ -208,12 +244,16 @@ curl -X POST http://localhost:4000/users/login \
 }
 ```
 
+
+
 ### Status Codes Summary
 
 - `200` - User logged in successfully
 - `400` - Invalid input or validation failed
 - `401` - Invalid email or password
 - `500` - Server error while logging in
+
+
 
 ### Notes
 
@@ -222,6 +262,8 @@ curl -X POST http://localhost:4000/users/login \
 - The endpoint accepts JSON data in the request body.
 
 ---
+
+
 
 ## Backend Route Flow Overview
 
@@ -301,7 +343,12 @@ flowchart TD
     end
 ```
 
+
+
+
+
 ### Route Summary
+
 
 | Route             | Method | Purpose                                       | Auth Required |
 | ----------------- | ------ | --------------------------------------------- | ------------- |
@@ -309,6 +356,9 @@ flowchart TD
 | `/users/login`    | POST   | Log in a user and return JWT                  | No            |
 | `/users/profile`  | GET    | Fetch logged-in user profile                  | Yes           |
 | `/users/logout`   | GET    | Log the user out and clean session/token data | Yes           |
+
+
+
 
 ### Main Request Flow
 
@@ -323,6 +373,8 @@ Client
   -> response payload / JWT token
 ```
 
+
+
 ### Protected Route Security Flow
 
 ```text
@@ -336,6 +388,8 @@ Request
 
 ---
 
+
+
 ## Captain Registration Endpoint
 
 This backend exposes the captain registration endpoint at:
@@ -343,6 +397,8 @@ This backend exposes the captain registration endpoint at:
 - POST /captains/register
 
 > Note: In the application code, the router is mounted under `/captains`, and the route file defines `/register`. So the complete endpoint is `/captains/register`.
+
+
 
 ### Description
 
@@ -373,6 +429,8 @@ The request body must be a JSON object in the following format:
 }
 ```
 
+
+
 ### Validation Rules
 
 - `fullname.firstname`: required, minimum 3 characters
@@ -383,6 +441,8 @@ The request body must be a JSON object in the following format:
 - `vehicle.numberplate`: required, minimum 4 characters
 - `vehicle.capacity`: required, must be an integer ≥ 1
 - `vehicle.vehicalType`: required, must be one of: `car`, `bike`, `van`, `auto`
+
+
 
 ### Example Request
 
@@ -405,7 +465,11 @@ curl -X POST http://localhost:4000/captains/register \
   }'
 ```
 
+
+
 ### Success Response
+
+
 
 #### Status Code
 
@@ -434,7 +498,11 @@ curl -X POST http://localhost:4000/captains/register \
 }
 ```
 
+
+
 ### Validation Error Response
+
+
 
 #### Status Code
 
@@ -459,7 +527,11 @@ curl -X POST http://localhost:4000/captains/register \
 }
 ```
 
+
+
 ### Duplicate Email Response
+
+
 
 #### Status Code
 
@@ -473,11 +545,15 @@ curl -X POST http://localhost:4000/captains/register \
 }
 ```
 
+
+
 ### Status Codes Summary
 
 - `201` - Captain successfully created
 - `400` - Invalid input, validation failed, or captain already exists
 - `500` - Server error while creating the captain
+
+
 
 ### Notes
 
@@ -490,9 +566,217 @@ curl -X POST http://localhost:4000/captains/register \
 
 ---
 
+
+
+## Captain Login Endpoint
+
+This backend exposes the captain login endpoint at:
+
+- POST /captains/login
+
+
+
+### Description
+
+Authenticates an existing captain by email and password. If valid, the server returns the captain details and a JWT token.
+
+### Request Method
+
+`POST`
+
+### Required Request Body
+
+```json
+{
+  "email": "rajesh.captain@example.com",
+  "password": "Captain@123"
+}
+```
+
+
+
+### Validation Rules
+
+- `email`: required, must be a valid email address
+- `password`: required, minimum 6 characters
+
+
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:4000/captains/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "rajesh.captain@example.com",
+    "password": "Captain@123"
+  }'
+```
+
+
+
+### Success Response
+
+**Status Code:** `200 OK`
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "captain": {
+    "_id": "64a7b2d9f1c2d3e4f5a6b7c9",
+    "fullname": {
+      "firstname": "Rajesh",
+      "lastname": "Kumar"
+    },
+    "email": "rajesh.captain@example.com",
+    "vehicle": {
+      "color": "Black",
+      "numberplate": "MH02AB1234",
+      "capacity": 4,
+      "vehicalType": "car"
+    },
+    "status": "active"
+  }
+}
+```
+
+
+
+### Status Codes Summary
+
+- `200` - Login successful
+- `400` - Validation failed
+- `401` - Invalid email or password
+- `500` - Server error
+
+---
+
+
+
+## Captain Profile Endpoint
+
+This backend exposes the captain profile endpoint at:
+
+- GET /captains/profile
+
+
+
+### Description
+
+Fetches the logged-in captain's profile. Requires authentication via the `authCaptain` middleware.
+
+### Authentication
+
+```http
+Authorization: Bearer <jwt_token>
+```
+
+Or via cookie:
+
+```http
+Cookie: token=<jwt_token>
+```
+
+
+
+### Example Request
+
+```bash
+curl http://localhost:4000/captains/profile \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+
+
+### Success Response
+
+**Status Code:** `200 OK`
+
+```json
+{
+  "captain": {
+    "_id": "64a7b2d9f1c2d3e4f5a6b7c9",
+    "fullname": {
+      "firstname": "Rajesh",
+      "lastname": "Kumar"
+    },
+    "email": "rajesh.captain@example.com",
+    "vehicle": {
+      "color": "Black",
+      "numberplate": "MH02AB1234",
+      "capacity": 4,
+      "vehicalType": "car"
+    },
+    "status": "active"
+  }
+}
+```
+
+
+
+### Status Codes Summary
+
+- `200` - Profile fetched successfully
+- `401` - Missing, invalid, or blacklisted token
+
+---
+
+
+
+## Captain Logout Endpoint
+
+This backend exposes the captain logout endpoint at:
+
+- GET /captains/logout
+
+
+
+### Description
+
+Logs out the captain, clears the session cookie, and blacklists the JWT token.
+
+### Authentication
+
+```http
+Authorization: Bearer <jwt_token>
+```
+
+
+
+### Example Request
+
+```bash
+curl http://localhost:4000/captains/logout \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+
+
+### Success Response
+
+**Status Code:** `200 OK`
+
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+
+
+### Status Codes Summary
+
+- `200` - Logout successful
+- `401` - Missing, invalid, or blacklisted token
+
+---
+
+
+
 ## Vehicle Types
 
 The following vehicle types are supported for captains:
+
 
 | Type | Description        |
 | ---- | ------------------ |
@@ -501,17 +785,22 @@ The following vehicle types are supported for captains:
 | van  | Van/Large vehicle  |
 | auto | Auto-rickshaw      |
 
-### Route Summary (Updated)
 
-| Route                | Method | Purpose                                       | Auth Required   |
-| -------------------- | ------ | --------------------------------------------- | --------------- |
-| `/users/register`    | POST   | Create a new user account                     | No              |
-| `/users/login`       | POST   | Log in a user and return JWT                  | No              |
-| `/users/profile`     | GET    | Fetch logged-in user profile                  | Yes             |
-| `/users/logout`      | GET    | Log the user out and clean session/token data | Yes             |
-| `/captains/register` | POST   | Create a new captain account                  | No              |
-| `/captains/login`    | POST   | Log in a captain and return JWT               | No (commented)  |
-| `/captains/profile`  | GET    | Fetch logged-in captain profile               | Yes (commented) |
-| `/captains/logout`   | GET    | Log the captain out                           | Yes (commented) |
 
-> Note: Captain login, profile, and logout endpoints are currently commented out. For full captain API documentation, see [CAPTAIN_API.md](CAPTAIN_API.md).
+
+### Route Summary 
+
+
+| Route                | Method | Purpose                                       | Auth Required |
+| -------------------- | ------ | --------------------------------------------- | ------------- |
+| `/users/register`    | POST   | Create a new user account                     | No            |
+| `/users/login`       | POST   | Log in a user and return JWT                  | No            |
+| `/users/profile`     | GET    | Fetch logged-in user profile                  | Yes           |
+| `/users/logout`      | GET    | Log the user out and clean session/token data | Yes           |
+| `/captains/register` | POST   | Create a new captain account                  | No            |
+| `/captains/login`    | POST   | Log in a captain and return JWT               | No            |
+| `/captains/profile`  | GET    | Fetch logged-in captain profile               | Yes           |
+| `/captains/logout`   | GET    | Log the captain out and blacklist token       | Yes           |
+
+
+> Note: For full captain API documentation, see [CAPTAIN_API.md](CAPTAIN_API.md). 

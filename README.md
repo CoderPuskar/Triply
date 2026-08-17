@@ -1,6 +1,6 @@
 # Triply
 
-Triply is a backend-first ride booking platform built with Node.js, Express, MongoDB, and JWT authentication. The current implementation focuses on user registration, login, profile access, and protected route security.
+Triply is a backend-first ride booking platform built with Node.js, Express, MongoDB, and JWT authentication. The current implementation focuses on user and captain registration, login, profile access, and protected route security.
 
 ## Overview
 
@@ -10,11 +10,15 @@ This project is designed to support a ride-sharing workflow where users can regi
 
 - User registration with validation
 - User login with password verification
+- Captain registration with vehicle details
+- Captain login, profile, and logout
 - JWT generation and authentication
-- Protected profile route
+- Protected profile routes for users and captains
 - Logout flow with token blacklisting support
 - MongoDB connection with Mongoose
 - Express API server on port 4000
+
+
 
 ## Tech Stack
 
@@ -24,6 +28,8 @@ This project is designed to support a ride-sharing workflow where users can regi
 - Validation: express-validator
 - Cookie handling: cookie-parser
 - Environment management: dotenv
+
+
 
 ## Project Structure
 
@@ -36,6 +42,10 @@ Triply/
 │   ├── package.json
 │   ├── README.md
 │   ├── CAPTAIN_API.md
+│   ├── postman/
+│   │   ├── captains-register.postman_collection.json
+│   │   ├── captains-login.postman_collection.json
+│   │   └── captains-profile.postman_collection.json
 │   ├── controllers/
 │   │   ├── user.controller.js
 │   │   └── captain.controller.js
@@ -57,11 +67,15 @@ Triply/
 └── Frontend/   (if added later)
 ```
 
+
+
 ## Backend API Routes
 
 The project exposes user routes under `/users` and captain routes under `/captains`.
 
 ### User Routes
+
+
 
 #### 1) Register User
 
@@ -71,7 +85,7 @@ The project exposes user routes under `/users` and captain routes under `/captai
 
 Request body:
 
-````json
+```json
 {
   "fullname": {
     "firstname": "John",
@@ -81,6 +95,9 @@ Request body:
   "password": "secret1234"
 }
 ```#
+```
+
+
 
 ### 2) Login User
 
@@ -95,7 +112,9 @@ Request body:
   "email": "john@example.com",
   "password": "secret1234"
 }
-````
+```
+
+
 
 #### 3) Get User Profile
 
@@ -110,11 +129,15 @@ Headers:
 Authorization: Bearer <jwt_token>
 ```
 
+
+
 #### 4) Logout User
 
 - Method: GET
 - Route: `/users/logout`
 - Description: Clears the cookie and optionally blacklists the JWT token.
+
+
 
 ### Captain Routes
 
@@ -145,23 +168,54 @@ Request body:
 }
 ```
 
-#### 2) Login Captain (Commented Out)
+
+
+#### 2) Login Captain
 
 - Method: POST
 - Route: `/captains/login`
 - Description: Verifies the password and returns the captain object and JWT token.
 
-#### 3) Get Captain Profile (Commented Out)
+Request body:
+
+```json
+{
+  "email": "rajesh.captain@example.com",
+  "password": "Captain@123"
+}
+```
+
+
+
+#### 3) Get Captain Profile
 
 - Method: GET
 - Route: `/captains/profile`
-- Description: Requires a valid JWT token.
+- Description: Returns the logged-in captain's profile. Requires a valid JWT token.
+- Auth flow: `authCaptain` middleware -> controller
 
-#### 4) Logout Captain (Commented Out)
+Headers:
+
+```http
+Authorization: Bearer <jwt_token>
+```
+
+
+
+#### 4) Logout Captain
 
 - Method: GET
-- Route: `/users/logout`
-- Description: Clears the cookie and optionally blacklists the JWT token.
+- Route: `/captains/logout`
+- Description: Clears the cookie and blacklists the JWT token.
+- Auth flow: `authCaptain` middleware -> controller
+
+Headers:
+
+```http
+Authorization: Bearer <jwt_token>
+```
+
+
 
 ## Authentication Flow
 
@@ -170,14 +224,34 @@ The backend uses JWT-based authentication for protected routes.
 1. User logs in with `/users/login`.
 2. The server generates a JWT from the user id.
 3. The client sends the token in:
-   - the `Authorization` header as `Bearer <token>`, or
-   - a cookie named `token`
+  - the `Authorization` header as `Bearer <token>`, or
+  - a cookie named `token`
 4. The middleware in [Backend/middlewares/auth.middlewares.js](Backend/middlewares/auth.middlewares.js) checks the token.
 5. The token is verified using `jwt.verify(token, process.env.JWT_SECRET)`.
 6. The user is loaded from MongoDB and attached to `req.user`.
 7. The protected route is allowed to continue.
 
+
+
+### Captain Authentication Flow
+
+Captains follow the same JWT pattern with dedicated middleware:
+
+1. Captain logs in with `POST /captains/login` or registers with `POST /captains/register`.
+2. The server generates a JWT from the captain's MongoDB `_id` (24-hour expiration).
+3. The client sends the token in:
+  - the `Authorization` header as `Bearer <token>`, or
+  - a cookie named `token`
+4. The `authCaptain` middleware in [Backend/middlewares/auth.middlewares.js](Backend/middlewares/auth.middlewares.js) checks the token.
+5. The token is verified using `jwt.verify(token, process.env.JWT_SECRET)`.
+6. The captain is loaded from MongoDB and attached to `req.captain`.
+7. The protected route is allowed to continue.
+
+
+
 ## Function Flow
+
+
 
 ### User Registration Flow
 
@@ -190,6 +264,8 @@ An example request flow for user registration looks like this:
 5. User is saved into MongoDB using the schema in [Backend/models/user.model.js](Backend/models/user.model.js).
 6. JWT token is generated with `user.generateAuthToken()`.
 7. Response is returned with created user data and token.
+
+
 
 ### Captain Registration Flow
 
@@ -206,6 +282,35 @@ An example request flow for captain registration looks like this:
 9. JWT token is generated with `captain.generateAuthToken()` (24-hour expiration).
 10. Response is returned with created captain data and token (201 Created).
 
+
+
+### Captain Login Flow
+
+1. Client sends `POST /captains/login` with email and password.
+2. Route validation runs in [Backend/routes/captain.routes.js](Backend/routes/captain.routes.js).
+3. Controller finds the captain by email and compares the password with bcrypt.
+4. JWT token is generated with `captain.generateAuthToken()`.
+5. Token is set in a cookie and returned in the response (200 OK).
+
+
+
+### Captain Profile Flow
+
+1. Client sends `GET /captains/profile` with a JWT token.
+2. `authCaptain` middleware verifies the token and loads the captain into `req.captain`.
+3. Controller returns `{ captain: req.captain }` (200 OK).
+
+
+
+### Captain Logout Flow
+
+1. Client sends `GET /captains/logout` with a JWT token.
+2. `authCaptain` middleware verifies the token.
+3. Controller clears the cookie and blacklists the token in MongoDB.
+4. Response returns `{ message: "Logged out successfully" }` (200 OK).
+
+
+
 ## Local Setup
 
 1. Open the backend folder:
@@ -214,25 +319,26 @@ An example request flow for captain registration looks like this:
 cd Backend
 ```
 
-2. Install dependencies:
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Start MongoDB locally on port 27017.
-
-4. Start the backend with Nodemon:
+1. Start MongoDB locally on port 27017.
+2. Start the backend with Nodemon:
 
 ```bash
 npx nodemon
 ```
 
-5. The server runs on:
+1. The server runs on:
 
 ```bash
 http://localhost:4000
 ```
+
+
 
 ## Environment Variables
 
@@ -246,6 +352,7 @@ MONGO_URI=mongodb://localhost:27017/triply
 
 > Note: The exact environment variable names may vary depending on the DB connection file in [Backend/db/db.js](Backend/db/db.js).
 
-## Notes
 
-This project is currently in active backend development. The user auth flow and protected routes are the main working features at this stage, and more modules can be added later for rides, drivers, booking logic, and frontend integration.
+
+
+
