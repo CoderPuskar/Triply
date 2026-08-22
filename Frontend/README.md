@@ -1,16 +1,83 @@
-# React + Vite
+# Triply Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The Triply frontend is a React single-page application for user and captain ride-booking flows. It is built with Vite and styled with Tailwind CSS.
 
-Currently, two official plugins are available:
+## Current Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Triply landing page with a taxi image and start button
+- User sign-up and login screens
+- Captain sign-up and login screens
+- Navigation between user and captain flows
+- Terms and Conditions modal on both sign-up screens
+- Initial user state provided through React Context
 
-## React Compiler
+Authentication forms currently manage their values locally. API requests and persistent authentication are not connected yet.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Routes
 
-## Expanding the ESLint configuration
+| Path | Screen |
+| --- | --- |
+| `/` | Home |
+| `/login` | User login |
+| `/signup` | User sign-up |
+| `/captain-login` | Captain login |
+| `/captain-signup` | Captain sign-up |
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Tech Stack
+
+- React 19
+- React DOM 19
+- React Router DOM 7
+- Vite 8
+- Tailwind CSS 4
+- ESLint 10
+
+## Getting Started
+
+From the `Frontend` directory:
+
+```bash
+npm install
+npm run dev
+```
+
+Vite will print the local development URL, normally `http://localhost:5173`.
+
+## Available Scripts
+
+```bash
+npm run dev       # Start the development server
+npm run build     # Create a production build
+npm run preview   # Preview the production build locally
+npm run lint      # Run ESLint
+```
+
+## Project Structure
+
+```text
+src/
+├── assets/                 # Images used by the application
+├── context/
+│   └── UserContext.jsx     # Initial user context and provider
+├── pages/
+│   ├── Home.jsx
+│   ├── UserLogin.jsx
+│   ├── UserSignup.jsx
+│   ├── CaptainLogin.jsx
+│   └── CaptainSignup.jsx
+├── App.jsx                 # Application routes
+├── App.css                 # Component and layout styles
+├── index.css               # Global stylesheet entry
+└── main.jsx                # React application entry point
+```
+
+`main.jsx` mounts the application inside `UserContext` and `BrowserRouter`. The context is exported as `UserDataContext` and currently contains an initial user object with email and name fields.
+
+## Backend
+
+The backend is in the sibling `Backend` directory. Its user and captain API documentation is available in:
+
+- `../Backend/README.md`
+- `../Backend/CAPTAIN_API.md`
+
+The frontend still needs API integration for registration, login, logout, profile data, and token handling.
