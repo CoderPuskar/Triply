@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+  /* Home */
+.Home-heading {
+font-family: 'Poppins', sans-serif;
+ position: relative;
+  /* color: white; */
+  text-shadow: 0 0 15px rgba(1, 1, 1, 1);
+}
+.Home-bottom{
+  background-color:white;
+  padding-bottom: 0.5%;
+  padding-top: 0%;
+}
+
+/* userlogin */
+.login-mobile {
+ .Userlogin-form {
+  width: 90%;
+  max-width: 450px;
+
+  margin: 0 auto;
+  padding: 30px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+}
+
+.Userlogin-form {
+  width: 90%;
+  max-width: 450px;
+  padding: 30px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* user login Mobile */
+@media (max-width: 600px) {
+  .login-mobile {
+    align-items: flex-start; /* move form to top */
+    padding-top: 30px;
+  }
+}
+
