@@ -1,15 +1,51 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import pilot from "../assets/pilot.png";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { CaptainDataContext } from "../context/CaptainContext";
 
 const CaptainLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const submitHandler = (e) => {
+  const { setCaptain } = React.useContext(CaptainDataContext);
+  const navigate = useNavigate();
+
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const submitHandler = async (e) => {
     e.preventDefault();
-    setEmail("");
-    setPassword("");
+    setErrorMessage("");
+
+    const captain = {
+      email: email,
+      password: password,
+    };
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/captains/login`,
+        captain,
+      );
+
+      if (response.status === 200) {
+        const data = response.data;
+        setCaptain(data.captain);
+        localStorage.setItem("token", data.token);
+        navigate("/captain-home");
+      }
+
+      setEmail("");
+      setPassword("");
+    } catch (error) {
+      console.error("Login failed:", error);
+      setErrorMessage(
+        error.response?.data?.message ||
+          error.response?.data?.errors?.[0]?.msg ||
+          "Invalid email or password. Please try again.",
+      );
+    }
   };
 
   return (
@@ -55,7 +91,11 @@ const CaptainLogin = () => {
             className="bg-[#f3f3f3] rounded border w-full px-4 py-2 text-lg placeholder:text-base mb-7"
           />
 
-          <button className="p-3 flex justify-center mt-2 text-2xl w-full bg-black text-white rounded-lg font-semibold">
+          {errorMessage && (
+            <div className="text-red-500 text-sm mb-4">{errorMessage}</div>
+          )}
+
+          <button className="p-3 flex justify-center mt-2 text-2xl w-full bg-black text-white rounded-lg font-semibold cursor-pointer">
             Login
           </button>
 

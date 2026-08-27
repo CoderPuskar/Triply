@@ -1,22 +1,42 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { use, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { UserDataContext } from "../context/UserContext";
+import { useContext } from "react";
 
 const UserLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [userData, setUserData] = useState("");
 
-  const submitHandler = (e) => {
+  const { user, setUser } = useContext(UserDataContext);
+  const navigate = useNavigate();
+
+  const submitHandler = async (e) => {
     e.preventDefault();
-    setUserData({
+
+    const userData = {
       email: email,
       password: password,
-    });
+    };
+    const response = await axios.post(
+      `${import.meta.env.VITE_BASE_URL}/users/login`,
+      userData,
+    );
+
+    if (response.status === 200) {
+      const data = response.data;
+      setUser(data.user);
+      localStorage.setItem('token',data.token)//instead of depending on user we depend on token to keep signing in 
+      navigate("/home");
+    }
+
     // console.log(userData);
     //to clear the form below code
     setEmail("");
     setPassword("");
   };
+
   return (
     <div className=" flex flex-col justify-between">
       <div className=" max-w-full bg-mauve-900 mt-0">
@@ -61,12 +81,18 @@ const UserLogin = () => {
           </button>
           <div className="flex justify-center">
             <h4>New here?</h4>
-            <Link to={'/signup'} className="justify-center flex mx-1 text-blue-600">
+            <Link
+              to={"/signup"}
+              className="justify-center flex mx-1 text-blue-600"
+            >
               Create new account
             </Link>
           </div>
 
-          <Link to={"/captain-login"} className="justify-center flex p-3 w-full  rounded-lg bg-green-500 mb-2 mt-15">
+          <Link
+            to={"/captain-login"}
+            className="justify-center flex p-3 w-full  rounded-lg bg-green-500 mb-2 mt-15"
+          >
             Sign in as a Captain
           </Link>
         </form>

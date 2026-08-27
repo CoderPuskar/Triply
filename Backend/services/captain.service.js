@@ -22,7 +22,7 @@ module.exports.registerCaptain = async ({
     throw new Error("All fields are required");
   }
 
-  const hashedPassword = await captainModel.hashPasswrd(password);
+  const hashedPassword = await captainModel.hashPassword(password);
 
   const captain = await captainModel.create({
     fullname: {

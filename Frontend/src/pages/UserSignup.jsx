@@ -1,5 +1,7 @@
 import React, { use, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { UserDataContext } from "../context/UserContext";
 
 const UserSignup = () => {
   const [email, setEmail] = useState("");
@@ -11,17 +13,35 @@ const UserSignup = () => {
 
   const [userData, setUserdata] = useState("");
 
-  const submitHandler = (e) => {
+  const navigate = useNavigate();
+
+  const { user, setUser } = React.useContext(UserDataContext);
+
+  const submitHandler = async (e) => {
     e.preventDefault();
     // store data
-    setUserdata({
+    const newUser = {
       fullname: {
         firstname: firstname,
         lastname: lastname,
       },
       password: password,
       email: email,
-    });
+    };
+    // Axios is used to communicate between your React frontend and backend server.
+    // axios.post(URL, DATA)
+    const response = await axios.post(
+      `${import.meta.env.VITE_BASE_URL}/users/register`,
+      newUser,
+    );
+
+    if (response.status === 201) {
+      //positive response
+      const data = response.data; //backend response like user registered siccessfully
+      setUser(data.user); //stores the newly registered user in your global context.
+      navigate("/home"); //navigate to home page
+    }
+
     console.log(userData);
     setEmail("");
     setFirstname("");
@@ -134,7 +154,7 @@ const UserSignup = () => {
               type="submit"
               className="p-3 flex justify-center mt-2 text-2xl w-full bg-black text-white rounded-lg font-semibold"
             >
-              Sign up
+              Create account
             </button>
           </div>
 
