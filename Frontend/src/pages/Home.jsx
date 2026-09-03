@@ -2,25 +2,50 @@ import React, { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import map_img from "../assets/map_img.png";
+import "remixicon/fonts/remixicon.css";
+import LocationSearchPanel from "../components/LocationSearchPanel";
 
 const Home = () => {
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
 
+  const panelCloseRef = useRef(null);
   const panelRef = useRef(null);
 
   const submitHandler = (e) => {
     e.preventDefault();
   };
 
-  useGSAP(() => {
-    gsap.to(panelRef.current, {
-      height: panelOpen ? "70vh" : "0vh",
-      duration: 0.45,
-      ease: "power2.inOut",
-    });
-  }, [panelOpen]);
+  useGSAP(
+    function () {
+      if (panelOpen) {
+        // Animate the panel to open
+        gsap.to(panelRef.current, {
+          height: "70%",
+          padding: "8px 20px 20px",
+          opacity: 1,
+        });
+
+        gsap.to(panelCloseRef.current, {
+          // Animate the close button to appear
+          opacity: 1,
+        });
+      } else {
+        gsap.to(panelRef.current, {
+          height: "0%",
+          opacity: 0,
+          padding: "0px 20px 0px",
+        });
+
+        gsap.to(panelCloseRef.current, {
+          // Animate the close button to disappear
+          opacity: 0,
+        });
+      }
+    },
+    [panelOpen], // Dependency array to trigger the animation when panelOpen changes
+  );
 
   return (
     <div className="relative h-screen overflow-hidden bg-gray-100">
@@ -33,10 +58,22 @@ const Home = () => {
       <div className="h-full w-full">
         <img src={map_img} alt="map" className="h-full w-full object-cover" />
       </div>
-      {/* Find a trip form  */}
-      <div className="absolute inset-0 flex  flex-col  mt-0 justify-end">
-        <div className="h-[30%] rounded-t-3xl bg-white p-5   relative">
-          <h4 className="text-2xl py-5 font-semibold">Find a trip</h4>
+
+      {/* Find a trip form */}
+      <div className="absolute inset-0 mt-0 flex flex-col pb-0 justify-end">
+        <div className="relative h-[30%] rounded-t-3xl bg-white p-10 ">
+          {/*down Arrow */}
+          <h1
+            onClick={() => {
+              setPanelOpen(false);
+            }}
+            ref={panelCloseRef}
+            className="absolute right-10 flex items-center gap-2 text-4xl font-bold cursor-pointer"
+          >
+            <i className="ri-arrow-down-double-line"></i>
+          </h1>
+
+          <h4 className="py-5 text-2xl font-semibold">Find a trip</h4>
 
           <form
             className="relative"
@@ -44,9 +81,10 @@ const Home = () => {
               submitHandler(e);
             }}
           >
-            {/* connecting line  */}
+            {/* Connecting line */}
             <div className="absolute left-5 top-1/2 h-16 w-1 -translate-y-1/2 rounded-full bg-gray-700"></div>
-            {/* inputs  */}
+
+            {/* Pickup input */}
             <input
               type="text"
               value={pickup}
@@ -56,6 +94,7 @@ const Home = () => {
               placeholder="Add a pick-up location"
             />
 
+            {/* Destination input */}
             <input
               type="text"
               value={destination}
@@ -67,7 +106,10 @@ const Home = () => {
           </form>
         </div>
 
-        <div ref={panelRef} className="h-screen bg-red-700"></div>
+        {/* Bottom panel */}
+        <div ref={panelRef} className="h-screen bg-white ">
+          <LocationSearchPanel />
+        </div>
       </div>
     </div>
   );
