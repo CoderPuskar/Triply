@@ -1,17 +1,22 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import map_img from "../assets/map_img.png";
 import "remixicon/fonts/remixicon.css";
 import LocationSearchPanel from "../components/LocationSearchPanel";
+import VehiclePanel from "../components/VehiclePanel";
 
 const Home = () => {
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [vehiclePanelOpen, setVehiclePanelOpen] = useState(false);
+  const [vehiclePaneClose, setVehiclePaneClose] = useState(false);
 
   const panelCloseRef = useRef(null);
   const panelRef = useRef(null);
+  const vehiclePanelRef = useRef(null);
 
   const submitHandler = (e) => {
     e.preventDefault();
@@ -47,6 +52,24 @@ const Home = () => {
     [panelOpen], // Dependency array to trigger the animation when panelOpen changes
   );
 
+  // clicking outside the vehicle box the box will disapear
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (
+        vehiclePanelRef.current &&
+        !vehiclePanelRef.current.contains(e.target)
+      ) {
+        setVehiclePanelOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
   return (
     <div className="relative h-screen overflow-hidden bg-gray-100">
       {!panelOpen && (
@@ -60,8 +83,8 @@ const Home = () => {
       </div>
 
       {/* Find a trip form */}
-      <div className="absolute inset-0 mt-0 flex flex-col pb-0 justify-end">
-        <div className="relative h-[30%] rounded-t-3xl bg-white p-10 ">
+      <div className="absolute inset-0  flex flex-col  justify-end ">
+        <div className="relative h-[40%] rounded-t-3xl bg-white p-10  ">
           {/*down Arrow */}
           <h1
             onClick={() => {
@@ -108,9 +131,24 @@ const Home = () => {
 
         {/* Bottom panel */}
         <div ref={panelRef} className="h-screen bg-white ">
-          <LocationSearchPanel />
+          {/* vehicle panel search sugestions  */}
+          <LocationSearchPanel
+            setPanelOpen={setPanelOpen}
+            setVehiclePanel={setVehiclePanelOpen}
+          />
         </div>
       </div>
+
+      {/* car choose section */}
+      <VehiclePanel 
+      vehiclePanelRef={vehiclePanelRef}
+      vehiclePanelOpen={vehiclePanelOpen}
+      setVehiclePanelOpen={setVehiclePanelOpen}
+      selectedVehicle={selectedVehicle}
+      setSelectedVehicle={setSelectedVehicle}
+
+      />
+      
     </div>
   );
 };
