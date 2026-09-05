@@ -9,6 +9,7 @@ const VehiclePanel = ({
   setVehiclePanelOpen,
   selectedVehicle,
   setSelectedVehicle,
+  setConfirmRidePanel,
 }) => {
   return (
     <div>
@@ -30,7 +31,10 @@ const VehiclePanel = ({
         <div className="flex flex-col p-5 gap-2">
           {/* 1st row -car*/}
           <div
-            onClick={() => setSelectedVehicle("car")}
+            onClick={() => {
+              setSelectedVehicle("car");
+              setConfirmRidePanel(true);
+            }}
             className={`grid bg-gray-100 w-full grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border-2 pr-2 ${selectedVehicle === "car" ? "border-black" : "border-gray-200"}`}
           >
             <div className="flex justify-center">
@@ -60,7 +64,10 @@ const VehiclePanel = ({
 
           {/* 2nd row-moto */}
           <div
-            onClick={() => setSelectedVehicle("bike")}
+            onClick={() => {
+              setSelectedVehicle("bike");
+              setConfirmRidePanel(true);
+            }}
             className={`grid  bg-gray-100  w-full grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border-2 pr-2 ${selectedVehicle === "bike" ? "border-black" : "border-gray-200"}`}
           >
             <div className="flex justify-center">
@@ -90,7 +97,10 @@ const VehiclePanel = ({
 
           {/* 3rd row -auto*/}
           <div
-            onClick={() => setSelectedVehicle("auto")}
+            onClick={() => {
+              setSelectedVehicle("auto");
+              setConfirmRidePanel(true);
+            }}
             className={`grid  bg-gray-100  w-full grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border-2 pr-2 ${selectedVehicle === "auto" ? "border-black" : "border-gray-200"}`}
           >
             <div className="flex justify-center">

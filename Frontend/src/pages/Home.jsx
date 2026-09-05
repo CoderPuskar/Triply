@@ -5,6 +5,9 @@ import map_img from "../assets/map_img.png";
 import "remixicon/fonts/remixicon.css";
 import LocationSearchPanel from "../components/LocationSearchPanel";
 import VehiclePanel from "../components/VehiclePanel";
+import ConfirmRide from "../components/ConfirmRide";
+import LookingForDriver from "../components/LookingForDriver";
+import WaitingForDriver from "../components/WaitingForDriver";
 
 const Home = () => {
   const [pickup, setPickup] = useState("");
@@ -12,16 +15,23 @@ const Home = () => {
   const [panelOpen, setPanelOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [vehiclePanelOpen, setVehiclePanelOpen] = useState(false);
-  const [vehiclePaneClose, setVehiclePaneClose] = useState(false);
+  const [confirmRidePanel, setconfirmRidePanel] = useState(false);
+  const [vehicleFound, setvehicleFound] = useState(false);
+  const [waitingForDriver, setWaitingForDriver] = useState(false);
+  const [ride, setRide] = useState(null);
 
   const panelCloseRef = useRef(null);
   const panelRef = useRef(null);
   const vehiclePanelRef = useRef(null);
+  const confirmRidePanelRef = useRef(null);
+  const vehicleFoundRef = useRef(null);
+  const waitingForDriverRef = useRef(null);
 
   const submitHandler = (e) => {
     e.preventDefault();
   };
 
+  // GSAP animation for opening and closing the panel of location search
   useGSAP(
     function () {
       if (panelOpen) {
@@ -52,6 +62,54 @@ const Home = () => {
     [panelOpen], // Dependency array to trigger the animation when panelOpen changes
   );
 
+  // GSAP animation for opening and closing the ride confirmation panel
+  useGSAP(
+    function () {
+      if (confirmRidePanel) {
+        gsap.to(confirmRidePanelRef.current, {
+          transform: "translateY(0%)",
+        });
+      } else {
+        gsap.to(confirmRidePanelRef.current, {
+          transform: "translateY(100%)",
+        });
+      }
+    },
+    [confirmRidePanel],
+  );
+
+  // GSAP animation for opening and closing the looking for driver panel
+  useGSAP(
+    function () {
+      if (vehicleFound) {
+        gsap.to(vehicleFoundRef.current, {
+          transform: "translateY(0%)",
+        });
+      } else {
+        gsap.to(vehicleFoundRef.current, {
+          transform: "translateY(100%)",
+        });
+      }
+    },
+    [vehicleFound],
+  );
+
+  // GSAP animation for opening and closing the waiting for driver panel
+  useGSAP(
+    function () {
+      if (waitingForDriver) {
+        gsap.to(waitingForDriverRef.current, {
+          transform: "translateY(0%)",
+        });
+      } else {
+        gsap.to(waitingForDriverRef.current, {
+          transform: "translateY(100%)",
+        });
+      }
+    },
+    [waitingForDriver],
+  );
+
   // clicking outside the vehicle box the box will disapear
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -60,6 +118,24 @@ const Home = () => {
         !vehiclePanelRef.current.contains(e.target)
       ) {
         setVehiclePanelOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
+  // clicking outside the confirm ride box the box will disapear
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (
+        confirmRidePanelRef.current &&
+        !confirmRidePanelRef.current.contains(e.target)
+      ) {
+        setconfirmRidePanel(false);
       }
     };
 
@@ -140,15 +216,46 @@ const Home = () => {
       </div>
 
       {/* car choose section */}
-      <VehiclePanel 
-      vehiclePanelRef={vehiclePanelRef}
-      vehiclePanelOpen={vehiclePanelOpen}
-      setVehiclePanelOpen={setVehiclePanelOpen}
-      selectedVehicle={selectedVehicle}
-      setSelectedVehicle={setSelectedVehicle}
-
+      <VehiclePanel
+        vehiclePanelRef={vehiclePanelRef}
+        vehiclePanelOpen={vehiclePanelOpen}
+        setVehiclePanelOpen={setVehiclePanelOpen}
+        selectedVehicle={selectedVehicle}
+        setSelectedVehicle={setSelectedVehicle}
+        setConfirmRidePanel={setconfirmRidePanel}
+        confirmRidePanel={confirmRidePanel}
       />
-      
+
+      <div
+        ref={confirmRidePanelRef}
+        className="fixed bottom-0 left-0 right-0 z-20 w-full translate-y-full bg-white"
+      >
+        <ConfirmRide
+          setConfirmRidePanel={setconfirmRidePanel}
+          setVehiclePanelOpen={setVehiclePanelOpen}
+          setvehicleFound={setvehicleFound}
+        />
+      </div>
+
+      <div
+        ref={vehicleFoundRef}
+        className="fixed bottom-0 left-0 right-0 z-20 w-full translate-y-full bg-white"
+      >
+        <LookingForDriver
+          setConfirmRidePanel={setconfirmRidePanel}
+          setvehicleFound={setvehicleFound}
+        />
+      </div>
+
+      <div
+        ref={waitingForDriverRef}
+        className="fixed bottom-0 left-0 right-0 z-20 w-full translate-y-full overflow-hidden rounded-t-3xl"
+      >
+        <WaitingForDriver
+          ride={ride}
+          setWaitingForDriver={setWaitingForDriver}
+        />
+      </div>
     </div>
   );
 };
