@@ -1,8 +1,5 @@
-import React from "react";
-import yellowtaxi from "../assets/yellowtaxi.png";
-import Heading from "../assets/Heading.png";
+import trafficLight from "../assets/Traffic_light.jpg";
 import { Link } from "react-router-dom";
-import { startTransition } from "react";
 
 const Start = () => {
   return (
@@ -10,13 +7,13 @@ const Start = () => {
       <div className="h-screen w-full relative flex flex-col">
         {/* Taxi image */}
         <img
-          src={yellowtaxi}
-          alt="yellowtaxi"
+          src={trafficLight}
+          alt="trafficLight"
           className="-translate-y-20 absolute inset-0 w-full h-full object-cover   "
         />
 
         {/* Heading image over taxi */}
-        <h1 className="Home-heading bg-blend-hard-light z-0 text-8xl m-10 text-white text-shadow-sm opacity-95 font-semibold">
+        <h1 className="Home-heading bg-blend-hard-light z-0 text-5xl m-5 text-white text-shadow-sm opacity-95 font-semibold">
           Triply
         </h1>
 
