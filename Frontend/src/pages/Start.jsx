@@ -5,7 +5,7 @@ const Start = () => {
   return (
     <div>
       <div className="h-screen w-full relative flex flex-col">
-        {/* Taxi image */}
+        {/*  image */}
         <img
           src={trafficLight}
           alt="trafficLight"

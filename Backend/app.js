@@ -18,6 +18,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
+const mapsRoutes = require("./routes/maps.routes");
+app.use("/maps", mapsRoutes);
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });

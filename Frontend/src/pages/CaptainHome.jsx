@@ -10,7 +10,7 @@ import pilot from "../assets/pilot.png";
 
 const CaptainHome = () => {
   // this is for ride request popup for captain to accept or ignore the ride request
-  const [ridePopupPanel, setRidePopupPanel] = useState(true); // temporary
+  const [ridePopupPanel, setRidePopupPanel] = useState(false); // temporary
   // this is for confirm ride popup for captain to confirm the ride after accepting the ride request
   const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(null);
 

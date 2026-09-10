@@ -8,6 +8,7 @@ import VehiclePanel from "../components/VehiclePanel";
 import ConfirmRide from "../components/ConfirmRide";
 import LookingForDriver from "../components/LookingForDriver";
 import WaitingForDriver from "../components/WaitingForDriver";
+import Map from "../components/Map";
 
 const Home = () => {
   const [pickup, setPickup] = useState("");
@@ -154,13 +155,15 @@ const Home = () => {
         </h1>
       )}
 
-      <div className="h-full w-full">
-        <img src={map_img} alt="map" className="h-full w-full object-cover" />
+      {/* this is the map */}
+      <div className="absolute inset-0 z-0">
+        {/* <img src={map_img} alt="map" className="h-full w-full object-cover" /> */}
+        <Map />
       </div>
 
       {/* Find a trip form */}
-      <div className="absolute inset-0  flex flex-col  justify-end ">
-        <div className="relative h-[40%] rounded-t-3xl bg-white p-10  ">
+      <div className="pointer-events-none absolute inset-0 flex flex-col justify-end">
+        <div className="pointer-events-auto relative h-[40%] rounded-t-3xl bg-white p-10">
           {/*down Arrow */}
           <h1
             onClick={() => {
@@ -206,7 +209,7 @@ const Home = () => {
         </div>
 
         {/* Bottom panel */}
-        <div ref={panelRef} className="h-screen bg-white ">
+        <div ref={panelRef} className="pointer-events-auto h-screen bg-white">
           {/* vehicle panel search sugestions  */}
           <LocationSearchPanel
             setPanelOpen={setPanelOpen}
