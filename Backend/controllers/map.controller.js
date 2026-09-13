@@ -2,7 +2,7 @@ const mapsService = require("../services/maps.service");
 const { validationResult } = require("express-validator");
 
 // Get coordinates for a given address
-module.exports.getCoordinates = async (req, res) => {
+async function getCoordinates(req, res) {
   try {
     const errors = validationResult(req);
 
@@ -26,10 +26,10 @@ module.exports.getCoordinates = async (req, res) => {
       error: error.message,
     });
   }
-};
+}
 
 // Get road distance and estimated travel time
-module.exports.getDistanceAndTime = async (req, res, next) => {
+async function getDistanceAndTime(req, res, next) {
   try {
     const errors = validationResult(req);
 
@@ -57,10 +57,10 @@ module.exports.getDistanceAndTime = async (req, res, next) => {
       error: error.message,
     });
   }
-};
+}
 
 // Get auto-complete suggestions for an address input
-module.exports.getAutoCompleteSuggestions = async (req, res, next) => {
+async function getAutoCompleteSuggestions(req, res, next) {
   try {
     const errors = validationResult(req);
 
@@ -82,4 +82,10 @@ module.exports.getAutoCompleteSuggestions = async (req, res, next) => {
       error: error.message,
     });
   }
+}
+
+module.exports = {
+  getCoordinates,
+  getDistanceAndTime,
+  getAutoCompleteSuggestions,
 };

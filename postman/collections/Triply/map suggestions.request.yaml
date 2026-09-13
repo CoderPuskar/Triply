@@ -1,0 +1,9 @@
+$kind: http-request
+url: http://localhost:4000/maps/get-suggestions?input=bengal
+method: GET
+queryParams:
+  - key: input
+    value: bengal
+    disabled: false
+    description: ""
+order: 4190748781522190

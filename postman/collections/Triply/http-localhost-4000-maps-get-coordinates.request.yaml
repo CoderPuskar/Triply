@@ -1,0 +1,8 @@
+$kind: http-request
+name: http://localhost:4000/maps/get-coordinates
+description: ""
+url: http://localhost:4000/maps/get-coordinates?address=uluberia, howrah
+method: GET
+queryParams:
+  address: uluberia, howrah
+order: 1789072287639

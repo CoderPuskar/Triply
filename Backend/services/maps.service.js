@@ -1,5 +1,6 @@
 const axios = require("axios");
 
+// Get coordinates for a given address using OpenStreetMap API
 const getAddressCoordinates = async (address) => {
   try {
     const response = await axios.get(
@@ -33,38 +34,13 @@ const getAddressCoordinates = async (address) => {
   }
 };
 
-// const getAutoCompleteSuggestions = async (input) => {
-//   try {
-//     const response = await axios.get(NOMINATIM_URL, {
-//       params: {
-//         q: input,
-//         format: "json",
-//         limit: 5,
-//         addressdetails: 1,
-//       },
-//       headers: NOMINATIM_HEADERS,
-//     });
-
-//     return response.data.map((location) => ({
-//       displayName: location.display_name,
-//       latitude: parseFloat(location.lat),
-//       longitude: parseFloat(location.lon),
-//     }));
-//   } catch (error) {
-//     console.error("Autocomplete error:", error.message);
-//     throw error;
-//   }
-// };
-
 // Get road distance and estimated travel time
 
 const getDistanceAndTime = async (origin, destination) => {
   try {
-    const originCoordinates =
-      await module.exports.getAddressCoordinates(origin);
+    const originCoordinates = await getAddressCoordinates(origin);
 
-    const destinationCoordinates =
-      await module.exports.getAddressCoordinates(destination);
+    const destinationCoordinates = await getAddressCoordinates(destination);
 
     const response = await axios.get(
       `https://router.project-osrm.org/route/v1/driving/` +
@@ -94,10 +70,49 @@ const getDistanceAndTime = async (origin, destination) => {
   }
 };
 
+// Get auto-complete suggestions for a given input
+const getAutoCompleteSuggestions = async (input) => {
+  try {
+    const response = await axios.get(
+      "https://nominatim.openstreetmap.org/search",
+      {
+        params: {
+          q: input,
+          format: "json",
+          addressdetails: 1,
+          limit: 5,
+        },
+        headers: {
+          "Accept-Language": "en",
+          "User-Agent": "Triply/1.0",
+        },
+      },
+    );
+
+    if (response.data.length === 0) {
+      throw new Error("No suggestions found");
+    }
+
+return response.data;
+
+
+    // return response.data.map((location) => ({
+
+    //   displayName: location.display_name,
+    //   latitude: parseFloat(location.lat),
+    //   longitude: parseFloat(location.lon),
+    // }));
+
+  } catch (error) {
+    console.error("Error fetching suggestions:", error.message);
+    throw error;
+  }
+};
+
 module.exports = {
   getAddressCoordinates,
   getDistanceAndTime,
-//   getAutoCompleteSuggestions,
+  getAutoCompleteSuggestions,
 };
 
 // it will take an address and return the coordinates of that address using open street map api
