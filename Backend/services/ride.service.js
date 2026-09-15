@@ -12,9 +12,15 @@ function getOtp(num) {
   return crypto.randomInt(minimum, maximum).toString();
 }
 
-async function getFare(pickup, destination) {
+async function getFare(pickup, destination, vehicleType) {
   if (!pickup || !destination) {
     throw new Error("Pickup and destination are required");
+  }
+
+  const allowedVehicleTypes = ["auto", "car", "moto"];
+
+  if (vehicleType && !allowedVehicleTypes.includes(vehicleType)) {
+    throw new Error("Invalid vehicle type");
   }
 
   const distanceTime = await mapsService.getDistanceAndTime(
@@ -62,6 +68,14 @@ async function getFare(pickup, destination) {
     ),
   };
 
+  if (vehicleType) {
+    return {
+      fare: fare[vehicleType],
+      distance,
+      duration,
+    };
+  }
+
   return { fare, distance, duration };
 }
 
@@ -81,14 +95,18 @@ module.exports.createRide = async ({
     throw new Error("Invalid vehicle type");
   }
 
-  const { fare, distance, duration } = await getFare(pickup, destination);
+  const { fare, distance, duration } = await getFare(
+    pickup,
+    destination,
+    vehicleType,
+  );
   const otp = getOtp(6);
 
   const ride = await rideModel.create({
     user,
     pickup,
     destination,
-    fare: fare[vehicleType],
+    fare,
     distance,
     duration,
     otp,

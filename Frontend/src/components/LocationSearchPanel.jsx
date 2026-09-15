@@ -1,56 +1,80 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-const LocationSearchPanel = ({ setPanelOpen, setVehiclePanel }) => {
-  // Sample location suggestions array
-  const sampleLocations = [
-    {
-      id: 1,
-      title: "Cyber Hub, DLF Cyber City",
-      subtitle: "DLF Phase 2, Sector 24, Gurugram, Haryana",
-      icon: "ri-building-2-fill",
-    },
+const LocationSearchPanel = ({
+  setPanelOpen,
+  setVehiclePanel,
+  input,
+  activeInput,
+  setPickup,
+  setDestination,
+}) => {
+  // This will contain suggestions received from your backend
+  const [locations, setLocations] = useState([]);
 
-    {
-      id: 2,
-      title: "Terminal 3, IGI International Airport",
-      subtitle: "Indira Gandhi International Airport, New Delhi",
-      icon: "ri-flight-takeoff-line",
-    },
-    {
-      id: 3,
-      title: "Connaught Place, Inner Circle",
-      subtitle: "Near Rajiv Chowk Metro Station, Central Delhi",
-      icon: "ri-map-pin-2-fill",
-    },
-    {
-      id: 4,
-      title: "24B, Near Kapoor's Cafe & Bakery",
-      subtitle: "Sheryians Coding School Road, Arera Colony, Bhopal",
-      icon: "ri-store-2-fill",
-    },
-    {
-      id: 5,
-      title: "New Delhi Railway Station (NDLS)",
-      subtitle: "Bhavbhuti Marg, Ratan Lal Market, Kamla Market, Delhi",
-      icon: "ri-train-line",
-    },
-    {
-      id: 6,
-      title: "Select Citywalk Mall, Saket",
-      subtitle: "A-3, District Centre, Saket, New Delhi",
-      icon: "ri-shopping-bag-3-fill",
-    },
-    {
-      id: 7,
-      title: "Sector 29 Market & Food Street",
-      subtitle: "Near Leisure Valley Park, Sector 29, Gurugram",
-      icon: "ri-restaurant-2-fill",
-    },
-  ];
+  const [loading, setLoading] = useState(false);
+  const query = input?.trim() || "";
 
-  const handleLocationSelect = () => {
-    setVehiclePanel(true); //vehicle panel opens
-    setPanelOpen(false); //locatin panel close
+  // Call backend whenever the user types
+  useEffect(() => {
+    if (query.length < 3) {
+      const resetTimer = setTimeout(() => {
+        setLocations([]);
+        setLoading(false);
+      }, 0);
+
+      return () => clearTimeout(resetTimer);
+    }
+
+    let cancelled = false;
+
+    // Debounce requests so every keystroke does not call the backend.
+    const timer = setTimeout(async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/maps/get-suggestions`,
+          {
+            params: { input: query },
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
+
+        if (!cancelled) {
+          setLocations(Array.isArray(response.data) ? response.data : []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Error fetching location suggestions:", error);
+          setLocations([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [input]);
+
+  const handleLocationSelect = (location) => {
+    const locationName =
+      location.display_name || location.displayName || location.name;
+
+    if (activeInput === "pickup") {
+      setPickup(locationName);
+    } else {
+      setDestination(locationName);
+      
+    }
+
+    // setPanelOpen(false);
   };
 
   return (
@@ -60,25 +84,33 @@ const LocationSearchPanel = ({ setPanelOpen, setVehiclePanel }) => {
         <span className="text-gray-500">Recent</span>
       </div>
 
+      {loading && (
+        <p className="py-4 text-center text-sm text-gray-500">Searching...</p>
+      )}
+
+      {!loading && query.length >= 3 && locations.length === 0 && (
+        <p className="py-4 text-center text-sm text-gray-500">
+          No locations found
+        </p>
+      )}
+
       <div className="space-y-2">
-        {sampleLocations.map((location) => (
+        {locations.map((location) => (
           <div
-            key={location.id}
-            onClick={handleLocationSelect}
+            key={location.place_id}
+            onClick={() => handleLocationSelect(location)}
             className="group flex cursor-pointer items-center justify-start gap-4 rounded-2xl border-2 border-transparent p-3 transition-all duration-200 hover:border-gray-200 hover:bg-gray-50 active:border-black active:bg-gray-100"
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eee] text-gray-700 transition-colors group-hover:bg-black group-hover:text-white">
-              <i
-                className={`${location.icon || "ri-map-pin-fill"} text-xl`}
-              ></i>
+              <i className="ri-map-pin-fill text-xl"></i>
             </div>
 
             <div className="min-w-0 flex-1">
               <h4 className="truncate text-base font-semibold text-gray-900">
-                {location.title}
+                {location.name || location.displayName || location.display_name}
               </h4>
-              <p className="truncate text-xs text-gray-500 mt-0.5">
-                {location.subtitle}
+              <p className="mt-0.5 truncate text-xs text-gray-500">
+                {location.displayName || location.display_name || location.name}
               </p>
             </div>
           </div>
@@ -89,3 +121,4 @@ const LocationSearchPanel = ({ setPanelOpen, setVehiclePanel }) => {
 };
 
 export default LocationSearchPanel;
+

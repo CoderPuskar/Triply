@@ -1,14 +1,17 @@
-import React, { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import map_img from "../assets/map_img.png";
+import { lazy, Suspense } from "react";
+import axios from "axios";
 import "remixicon/fonts/remixicon.css";
 import LocationSearchPanel from "../components/LocationSearchPanel";
 import VehiclePanel from "../components/VehiclePanel";
 import ConfirmRide from "../components/ConfirmRide";
 import LookingForDriver from "../components/LookingForDriver";
 import WaitingForDriver from "../components/WaitingForDriver";
-import Map from "../components/Map";
+
+
+const LazyMap = lazy(() => import("../components/Map"));
 
 const Home = () => {
   const [pickup, setPickup] = useState("");
@@ -20,6 +23,7 @@ const Home = () => {
   const [vehicleFound, setvehicleFound] = useState(false);
   const [waitingForDriver, setWaitingForDriver] = useState(false);
   const [ride, setRide] = useState(null);
+  const [fare, setFare] = useState(null);
 
   const panelCloseRef = useRef(null);
   const panelRef = useRef(null);
@@ -27,6 +31,8 @@ const Home = () => {
   const confirmRidePanelRef = useRef(null);
   const vehicleFoundRef = useRef(null);
   const waitingForDriverRef = useRef(null);
+
+  const [activeInput, setActiveInput] = useState("pickup");
 
   const submitHandler = (e) => {
     e.preventDefault();
@@ -147,6 +153,33 @@ const Home = () => {
     };
   }, []);
 
+  async function find_a_trip() {
+    setVehiclePanelOpen(true);
+    setPanelOpen(false);
+    // Fetch fare from the backend
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/rides/fare`,
+        {
+          params: {
+            pickup,
+            destination,
+          },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      setFare(response.data);
+
+      console.log(response.data);
+    } catch (error) {
+      console.error("Error fetching fare:", error);
+    }
+    
+  }
+
   return (
     <div className="relative h-screen overflow-hidden bg-gray-100">
       {!panelOpen && (
@@ -158,7 +191,9 @@ const Home = () => {
       {/* this is the map */}
       <div className="absolute inset-0 z-0">
         {/* <img src={map_img} alt="map" className="h-full w-full object-cover" /> */}
-        <Map />
+        <Suspense fallback={<div className="h-full w-full bg-gray-300"></div>}>
+          <LazyMap />
+        </Suspense>
       </div>
 
       {/* Find a trip form */}
@@ -190,7 +225,10 @@ const Home = () => {
             <input
               type="text"
               value={pickup}
-              onFocus={() => setPanelOpen(true)}
+              onFocus={() => {
+                setActiveInput("pickup");
+                setPanelOpen(true);
+              }}
               onChange={(e) => setPickup(e.target.value)}
               className="w-full rounded-lg bg-[#eee] px-12 py-2 text-lg"
               placeholder="Add a pick-up location"
@@ -200,12 +238,23 @@ const Home = () => {
             <input
               type="text"
               value={destination}
-              onFocus={() => setPanelOpen(true)}
+              onFocus={() => {
+                setActiveInput("destination");
+                setPanelOpen(true);
+              }}
               onChange={(e) => setDestination(e.target.value)}
               className="mt-3 w-full rounded-lg bg-[#eee] px-12 py-2 text-lg"
               placeholder="Enter your destination"
             />
           </form>
+          <button
+            onClick={() => {
+              find_a_trip();
+            }}
+            className="mt-5 w-full rounded-xl bg-black px-6 py-3 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-xl active:translate-y-0"
+          >
+            Find a trip
+          </button>
         </div>
 
         {/* Bottom panel */}
@@ -214,6 +263,10 @@ const Home = () => {
           <LocationSearchPanel
             setPanelOpen={setPanelOpen}
             setVehiclePanel={setVehiclePanelOpen}
+            input={activeInput === "pickup" ? pickup : destination}
+            activeInput={activeInput}
+            setPickup={setPickup}
+            setDestination={setDestination}
           />
         </div>
       </div>
@@ -227,6 +280,7 @@ const Home = () => {
         setSelectedVehicle={setSelectedVehicle}
         setConfirmRidePanel={setconfirmRidePanel}
         confirmRidePanel={confirmRidePanel}
+
       />
 
       <div

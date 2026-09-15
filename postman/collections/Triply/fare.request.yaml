@@ -1,0 +1,22 @@
+$kind: http-request
+url: http://localhost:4000/rides/fare?pickup=Howrah&destination=Salt%20Lake&vehicleType=car
+method: GET
+headers:
+	- key: Authorization
+		value: Bearer {{token}}
+		disabled: false
+		description: "JWT returned by the user login request"
+queryParams:
+	- key: pickup
+		value: Howrah
+		disabled: false
+		description: "Pickup location"
+	- key: destination
+		value: Salt Lake
+		disabled: false
+		description: "Destination location"
+	- key: vehicleType
+		value: car
+		disabled: false
+		description: "Allowed values: auto, car, moto"
+order: 4486908548976966

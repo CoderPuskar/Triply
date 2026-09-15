@@ -23,7 +23,7 @@ const ConfirmRide = (props) => {
         <div className="w-full flex flex-col gap-2">
           {/*customer location */}
           <div className="flex px-8 gap-2 items-center  py-2 border-b-2 border-gray-100 mx-10">
-            <i class="ri-map-pin-user-fill"></i>
+            <i className="ri-map-pin-user-fill"></i>
             <div>
               <h3>562/11-A</h3>
               <p>123 Main Street</p>
@@ -31,7 +31,7 @@ const ConfirmRide = (props) => {
           </div>
           {/* car location */}
           <div className="flex px-8 gap-2 items-center py-2 border-b-2 border-gray-100 mx-10">
-            <i class="ri-map-pin-3-fill"></i>
+            <i className="ri-map-pin-3-fill"></i>
             <div>
               <h3>562/11-A</h3>
               <p>123 Main Street</p>
@@ -39,7 +39,7 @@ const ConfirmRide = (props) => {
           </div>
           {/* cash */}
           <div className="flex px-8 gap-2 items-center py-2  mx-10">
-            <i class="ri-money-rupee-circle-fill"></i>
+            <i className="ri-money-rupee-circle-fill"></i>
             <div>
               <h3>₹193.20</h3>
               <p>Cash</p>
