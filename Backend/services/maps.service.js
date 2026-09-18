@@ -109,10 +109,25 @@ return response.data;
   }
 };
 
+const getCaptainsNearby = async (latitude, longitude, radius) => {
+ const captains = await Captain.find({
+  location: {
+    $geoWithin: {
+      $centerSphere: [
+        [longitude, latitude],
+        radius / 6378.1
+      ]
+    }
+  }
+});
+ return captains;
+};
+
 module.exports = {
   getAddressCoordinates,
   getDistanceAndTime,
   getAutoCompleteSuggestions,
+  getCaptainsNearby,
 };
 
 // it will take an address and return the coordinates of that address using open street map api

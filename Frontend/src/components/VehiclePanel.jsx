@@ -10,6 +10,8 @@ const VehiclePanel = ({
   selectedVehicle,
   setSelectedVehicle,
   setConfirmRidePanel,
+  fare,
+  fareLoading,
 }) => {
   return (
     <div>
@@ -50,7 +52,9 @@ const VehiclePanel = ({
                 </span>
               </h4>
 
-              <h5 className="text-sm font-medium">3 mins away</h5>
+              <h5 className="text-sm font-medium">
+                {fareLoading ? "Loading..." : `${fare?.duration}`} mins away
+              </h5>
 
               <p className="text-xs font-normal text-gray-600">
                 Comfortable rides for everyday travel
@@ -58,17 +62,19 @@ const VehiclePanel = ({
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold">₹ 180</h2>
+              <h2 className="text-xl font-semibold">
+                {fareLoading ? "Loading..." : `₹ ${fare?.fare?.car}`}
+              </h2>
             </div>
           </div>
 
           {/* 2nd row-moto */}
           <div
             onClick={() => {
-              setSelectedVehicle("bike");
+              setSelectedVehicle("moto");
               setConfirmRidePanel(true);
             }}
-            className={`grid  bg-gray-100  w-full grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border-2 pr-2 ${selectedVehicle === "bike" ? "border-black" : "border-gray-200"}`}
+            className={`grid  bg-gray-100  w-full grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border-2 pr-2 ${selectedVehicle === "moto" ? "border-black" : "border-gray-200"}`}
           >
             <div className="flex justify-center">
               <img className="h-[10vh] w-auto p-2" src={bike} alt="Motorbike" />
@@ -83,7 +89,9 @@ const VehiclePanel = ({
                 </span>
               </h4>
 
-              <h5 className="text-sm font-medium">1 min away</h5>
+              <h5 className="text-sm font-medium">
+                {fareLoading ? "Loading..." : `${fare?.duration} mins away`}
+              </h5>
 
               <p className="text-xs font-normal text-gray-600">
                 Quick and economical rides
@@ -91,7 +99,9 @@ const VehiclePanel = ({
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold">₹ 80</h2>
+              <h2 className="text-xl font-semibold">
+                {fareLoading ? "Loading..." : `₹ ${fare?.fare?.moto}`}
+              </h2>
             </div>
           </div>
 
@@ -116,7 +126,9 @@ const VehiclePanel = ({
                 </span>
               </h4>
 
-              <h5 className="text-sm font-medium">2 mins away</h5>
+              <h5 className="text-sm font-medium">
+                {fareLoading ? "Loading..." : `${fare?.duration} mins away`}
+              </h5>
 
               <p className="text-xs font-normal text-gray-600">
                 Affordable rides for short trips
@@ -124,7 +136,9 @@ const VehiclePanel = ({
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold">₹ 120</h2>
+              <h2 className="text-xl font-semibold">
+                {fareLoading ? "Loading..." : `₹ ${fare?.fare?.auto}`}
+              </h2>
             </div>
           </div>
         </div>

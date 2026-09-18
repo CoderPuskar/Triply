@@ -22,6 +22,7 @@ const captainSchema = new mongoose.Schema({
   //   type: Number,
   //   required: true,
   // },
+  
   status: {
     type: String,
     enum: ["active", "inactive"],
@@ -49,16 +50,16 @@ const captainSchema = new mongoose.Schema({
       enum: ["car", "bike", "van", "auto", "moto"],
     },
   },
-  // location: {
-  //   lat: {
-  //     type: Number,
-  //     required: true,
-  //   },
-  //   lng: {
-  //     type: Number,
-  //     required: true,
-  //   },
-  // },
+  location: {
+    latitude: {
+      type: Number,
+      required: true,
+    },
+    longitude: {
+      type: Number,
+      required: true,
+    },
+  },
   email: {
     type: String,
     required: true,
@@ -71,6 +72,9 @@ const captainSchema = new mongoose.Schema({
     required: true,
     minlength: [6, "Password must be at least 6 characters long"],
     select: false, // Exclude password from query results by default
+  },
+  socketId: {
+    type: String,
   },
 });
 

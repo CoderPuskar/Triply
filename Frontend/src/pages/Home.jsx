@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useContext } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { lazy, Suspense } from "react";
@@ -9,7 +9,8 @@ import VehiclePanel from "../components/VehiclePanel";
 import ConfirmRide from "../components/ConfirmRide";
 import LookingForDriver from "../components/LookingForDriver";
 import WaitingForDriver from "../components/WaitingForDriver";
-
+import { SocketContext } from "../context/SocketContext";
+import { UserDataContext } from "../context/UserContext";
 
 const LazyMap = lazy(() => import("../components/Map"));
 
@@ -24,6 +25,8 @@ const Home = () => {
   const [waitingForDriver, setWaitingForDriver] = useState(false);
   const [ride, setRide] = useState(null);
   const [fare, setFare] = useState(null);
+  const [fareLoading, setFareLoading] = useState(false);
+  const [activeInput, setActiveInput] = useState("pickup");
 
   const panelCloseRef = useRef(null);
   const panelRef = useRef(null);
@@ -32,7 +35,16 @@ const Home = () => {
   const vehicleFoundRef = useRef(null);
   const waitingForDriverRef = useRef(null);
 
-  const [activeInput, setActiveInput] = useState("pickup");
+  const { sendMessage,receiveMessage } = useContext(SocketContext);
+  const { user } = useContext(UserDataContext);
+
+  useEffect(() => {
+    // console.log(user)
+    if (user?._id) {
+      sendMessage("join", { userType: "user", userId: user._id });
+    }
+  }, [sendMessage, user]);
+
 
   const submitHandler = (e) => {
     e.preventDefault();
@@ -157,6 +169,7 @@ const Home = () => {
     setVehiclePanelOpen(true);
     setPanelOpen(false);
     // Fetch fare from the backend
+    setFareLoading(true);
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/rides/fare`,
@@ -176,8 +189,39 @@ const Home = () => {
       console.log(response.data);
     } catch (error) {
       console.error("Error fetching fare:", error);
+    } finally {
+      setFareLoading(false);
     }
-    
+  }
+
+  async function createRide(selectedVehicle) {
+    // Create a ride with the selected vehicle type
+    const response = await axios
+      .post(
+        `${import.meta.env.VITE_BASE_URL}/rides/create`,
+        {
+          pickup,
+          destination,
+          vehicleType: selectedVehicle,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      )
+      .catch((error) => {
+        console.error("Error creating ride:", error);
+      });
+
+    if (response && response.data) {
+      setRide(response.data);
+      console.log("Ride created:", response.data);
+      setconfirmRidePanel(false);
+      setvehicleFound(true);
+    }
+
+    console.log("Ride creation response:", response);
   }
 
   return (
@@ -259,7 +303,7 @@ const Home = () => {
 
         {/* Bottom panel */}
         <div ref={panelRef} className="pointer-events-auto h-screen bg-white">
-          {/* vehicle panel search sugestions  */}
+          {/* search sugestions  */}
           <LocationSearchPanel
             setPanelOpen={setPanelOpen}
             setVehiclePanel={setVehiclePanelOpen}
@@ -280,7 +324,10 @@ const Home = () => {
         setSelectedVehicle={setSelectedVehicle}
         setConfirmRidePanel={setconfirmRidePanel}
         confirmRidePanel={confirmRidePanel}
-
+        fare={fare}
+        setFare={setFare}
+        fareLoading={fareLoading}
+        createRide={createRide}
       />
 
       <div
@@ -291,6 +338,11 @@ const Home = () => {
           setConfirmRidePanel={setconfirmRidePanel}
           setVehiclePanelOpen={setVehiclePanelOpen}
           setvehicleFound={setvehicleFound}
+          pickup={pickup}
+          destination={destination}
+          fare={fare}
+          selectedVehicle={selectedVehicle}
+          createRide={createRide}
         />
       </div>
 
@@ -301,6 +353,8 @@ const Home = () => {
         <LookingForDriver
           setConfirmRidePanel={setconfirmRidePanel}
           setvehicleFound={setvehicleFound}
+          ride={ride}
+          vehicleType={selectedVehicle}
         />
       </div>
 

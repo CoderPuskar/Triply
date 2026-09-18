@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useContext } from "react";
+import { CaptainDataContext } from "../context/CaptainContext";
 import profilePic from "../assets/ProfilePic.jpg";
 
 const CaptainDetails = () => {
+  const { captain } = useContext(CaptainDataContext);
 
   useEffect(() => {
     window.scrollTo({
@@ -19,7 +21,7 @@ const CaptainDetails = () => {
             src={profilePic}
             alt="Profile"
           />
-          <h4 className="text-lg font-medium capitalize">Puskar Maity</h4>
+          <h4 className="text-lg font-medium capitalize">{captain.fullname.firstname} {captain.fullname.lastname}</h4>
         </div>
         <div>
           <h4 className="text-xl font-semibold">₹295.20</h4>

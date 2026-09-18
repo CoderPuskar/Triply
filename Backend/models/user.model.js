@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema({
     select: false,
     maxlength: 1024,
   },
-  sockerId: {
+  socketId: {
     type: String,
   },
   //   date: {

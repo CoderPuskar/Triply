@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import CaptainDetails from "../components/CaptainDetails";
 import RidePopUp from "../components/RidePopUp";
@@ -7,8 +7,49 @@ import gsap from "gsap";
 import ConfirmRidePopUp from "../components/ConfirmRidePopUp";
 import map from "../assets/map_img.png";
 import pilot from "../assets/pilot.png";
+import { SocketContext } from "../context/SocketContext";
+import { CaptainDataContext } from "../context/CaptainContext";
 
 const CaptainHome = () => {
+  const { sendMessage } = useContext(SocketContext);
+  const { captain } = useContext(CaptainDataContext);
+
+
+  // this is for sending the captain location to the server every 10 seconds
+  useEffect(() => {
+    const captainId = captain?._id;
+
+    if (!captainId || !navigator.geolocation) {
+      return;
+    }
+
+    sendMessage("join", { userType: "captain", userId: captainId });
+
+    const sendCaptainLocation = () => {
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) => {
+          sendMessage("update_location_captain", {
+            userId: captainId,
+            location: {
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+            },
+          });
+        },
+        (error) => {
+          console.error("Unable to get captain location:", error.message);
+        },
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 },
+      );
+    };
+
+    sendCaptainLocation();
+    const locationInterval = setInterval(sendCaptainLocation, 10000);
+
+    return () => clearInterval(locationInterval);
+  }, [sendMessage, captain?._id]);
+
+
   // this is for ride request popup for captain to accept or ignore the ride request
   const [ridePopupPanel, setRidePopupPanel] = useState(false); // temporary
   // this is for confirm ride popup for captain to confirm the ride after accepting the ride request
