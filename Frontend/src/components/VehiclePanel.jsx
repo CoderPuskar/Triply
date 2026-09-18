@@ -52,8 +52,8 @@ const VehiclePanel = ({
                 </span>
               </h4>
 
-              <h5 className="text-sm font-medium">
-                {fareLoading ? "Loading..." : `${fare?.duration}`} mins away
+              <h5 className="text-sm font-medium min-h-5">
+                {fareLoading ? "Loading..." : `${fare?.duration ?? "--"} mins away`}
               </h5>
 
               <p className="text-xs font-normal text-gray-600">
@@ -62,8 +62,8 @@ const VehiclePanel = ({
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold">
-                {fareLoading ? "Loading..." : `₹ ${fare?.fare?.car}`}
+              <h2 className="text-xl font-semibold min-w-20">
+                {fareLoading ? "Loading..." : `₹ ${fare?.fare?.car ?? "--"}`}
               </h2>
             </div>
           </div>
@@ -89,8 +89,8 @@ const VehiclePanel = ({
                 </span>
               </h4>
 
-              <h5 className="text-sm font-medium">
-                {fareLoading ? "Loading..." : `${fare?.duration} mins away`}
+              <h5 className="text-sm font-medium min-h-5">
+                {fareLoading ? "Loading..." : `${fare?.duration ?? "--"} mins away`}
               </h5>
 
               <p className="text-xs font-normal text-gray-600">
@@ -99,8 +99,8 @@ const VehiclePanel = ({
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold">
-                {fareLoading ? "Loading..." : `₹ ${fare?.fare?.moto}`}
+              <h2 className="text-xl font-semibold min-w-20">
+                {fareLoading ? "Loading..." : `₹ ${fare?.fare?.moto ?? "--"}`}
               </h2>
             </div>
           </div>
@@ -126,8 +126,8 @@ const VehiclePanel = ({
                 </span>
               </h4>
 
-              <h5 className="text-sm font-medium">
-                {fareLoading ? "Loading..." : `${fare?.duration} mins away`}
+              <h5 className="text-sm font-medium min-h-5">
+                {fareLoading ? "Loading..." : `${fare?.duration ?? "--"} mins away`}
               </h5>
 
               <p className="text-xs font-normal text-gray-600">
@@ -136,8 +136,8 @@ const VehiclePanel = ({
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold">
-                {fareLoading ? "Loading..." : `₹ ${fare?.fare?.auto}`}
+              <h2 className="text-xl font-semibold min-w-20">
+                {fareLoading ? "Loading..." : `₹ ${fare?.fare?.auto ?? "--"}`}
               </h2>
             </div>
           </div>

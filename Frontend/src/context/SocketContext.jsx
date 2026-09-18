@@ -28,11 +28,11 @@ const SocketProvider = ({ children }) => {
     socket.emit(eventName, message);
   }, []);
 
-  const receiveMessage = (eventName, callback) => {
+  const receiveMessage = useCallback((eventName, callback) => {
     socket.on(eventName, callback);
 
     return () => socket.off(eventName, callback);
-  };
+  }, []);
 
   return (
     <SocketContext.Provider value={{ sendMessage, receiveMessage }}>

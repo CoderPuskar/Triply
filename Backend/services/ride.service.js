@@ -28,11 +28,42 @@ async function getFare(pickup, destination, vehicleType) {
     destination,
   );
 
-  const distance = Number.parseFloat(distanceTime.distance);
-  const estimatedDuration = Number.parseFloat(distanceTime.time);
+  let distance = 0;
+  if (typeof distanceTime.distance === "number") {
+    distance = distanceTime.distance;
+  } else if (distanceTime.distance?.value !== undefined) {
+    distance = distanceTime.distance.value / 1000;
+  } else if (typeof distanceTime.distance?.text === "string") {
+    distance = Number.parseFloat(distanceTime.distance.text);
+  } else if (typeof distanceTime.distanceText === "string") {
+    distance = Number.parseFloat(distanceTime.distanceText);
+  } else if (typeof distanceTime.distance === "string") {
+    distance = Number.parseFloat(distanceTime.distance);
+  }
+
+  let estimatedDuration = 0;
+  if (typeof distanceTime.duration === "number") {
+    estimatedDuration = distanceTime.duration;
+  } else if (distanceTime.duration?.value !== undefined) {
+    estimatedDuration = distanceTime.duration.value / 60;
+  } else if (typeof distanceTime.duration?.text === "string") {
+    estimatedDuration = Number.parseFloat(distanceTime.duration.text);
+  } else if (typeof distanceTime.timeText === "string") {
+    estimatedDuration = Number.parseFloat(distanceTime.timeText);
+  } else if (typeof distanceTime.time === "number") {
+    estimatedDuration = distanceTime.time;
+  } else if (typeof distanceTime.time === "string") {
+    estimatedDuration = Number.parseFloat(distanceTime.time);
+  }
+
   const duration = Math.ceil(estimatedDuration * 1.2); //this is to account for traffic and other delays, we are adding 20% to the estimated duration
 
-  if (Number.isNaN(distance) || Number.isNaN(duration)) {
+  if (
+    Number.isNaN(distance) ||
+    Number.isNaN(duration) ||
+    distance <= 0 ||
+    duration <= 0
+  ) {
     throw new Error("Unable to calculate ride distance and duration");
   }
 
@@ -112,5 +143,36 @@ module.exports.createRide = async ({
     otp,
   });
 
+  if (typeof ride?.populate === "function") {
+    await ride.populate("user", "fullname");
+  }
+
+  return ride;
+};
+
+module.exports.startRide = async ({ rideId, otp, captainId }) => {
+  const ride = await rideModel.findById(rideId).select("+otp");
+
+  if (!ride) {
+    throw new Error("Ride not found");
+  }
+
+  if (ride.status !== "pending") {
+    throw new Error("Ride is no longer available");
+  }
+
+  if (ride.otp !== otp) {
+    throw new Error("Invalid OTP");
+  }
+
+  ride.captain = captainId;
+  ride.status = "ongoing";
+  await ride.save();
+
+  await ride.populate([
+    { path: "user", select: "socketId fullname" },
+    { path: "captain", select: "fullname vehicle" },
+  ]);
+  ride.otp = undefined;
   return ride;
 };

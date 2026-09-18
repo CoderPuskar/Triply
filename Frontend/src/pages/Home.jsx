@@ -35,7 +35,7 @@ const Home = () => {
   const vehicleFoundRef = useRef(null);
   const waitingForDriverRef = useRef(null);
 
-  const { sendMessage,receiveMessage } = useContext(SocketContext);
+  const { sendMessage, receiveMessage } = useContext(SocketContext);
   const { user } = useContext(UserDataContext);
 
   useEffect(() => {
@@ -45,6 +45,13 @@ const Home = () => {
     }
   }, [sendMessage, user]);
 
+  useEffect(() => {
+    return receiveMessage("rideStarted", (startedRide) => {
+      setRide(startedRide);
+      setvehicleFound(false);
+      setWaitingForDriver(true);
+    });
+  }, [receiveMessage]);
 
   const submitHandler = (e) => {
     e.preventDefault();
@@ -131,6 +138,8 @@ const Home = () => {
 
   // clicking outside the vehicle box the box will disapear
   useEffect(() => {
+    if (!vehiclePanelOpen) return;
+
     const handleOutsideClick = (e) => {
       if (
         vehiclePanelRef.current &&
@@ -140,15 +149,20 @@ const Home = () => {
       }
     };
 
-    document.addEventListener("mousedown", handleOutsideClick);
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }, 100);
 
     return () => {
+      clearTimeout(timer);
       document.removeEventListener("mousedown", handleOutsideClick);
     };
-  }, []);
+  }, [vehiclePanelOpen]);
 
   // clicking outside the confirm ride box the box will disapear
   useEffect(() => {
+    if (!confirmRidePanel) return;
+
     const handleOutsideClick = (e) => {
       if (
         confirmRidePanelRef.current &&
@@ -158,14 +172,20 @@ const Home = () => {
       }
     };
 
-    document.addEventListener("mousedown", handleOutsideClick);
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }, 100);
 
     return () => {
+      clearTimeout(timer);
       document.removeEventListener("mousedown", handleOutsideClick);
     };
-  }, []);
+  }, [confirmRidePanel]);
 
   async function find_a_trip() {
+    if (!pickup?.trim() || !destination?.trim()) {
+      return;
+    }
     setVehiclePanelOpen(true);
     setPanelOpen(false);
     // Fetch fare from the backend
@@ -185,8 +205,7 @@ const Home = () => {
       );
 
       setFare(response.data);
-
-      console.log(response.data);
+      console.log("Fare data:", response.data);
     } catch (error) {
       console.error("Error fetching fare:", error);
     } finally {
@@ -217,11 +236,11 @@ const Home = () => {
     if (response && response.data) {
       setRide(response.data);
       console.log("Ride created:", response.data);
-      setconfirmRidePanel(false);
-      setvehicleFound(true);
+      return response.data;
     }
 
     console.log("Ride creation response:", response);
+    return null;
   }
 
   return (
@@ -303,7 +322,7 @@ const Home = () => {
 
         {/* Bottom panel */}
         <div ref={panelRef} className="pointer-events-auto h-screen bg-white">
-          {/* search sugestions  */}
+          {/* vehicle panel search sugestions  */}
           <LocationSearchPanel
             setPanelOpen={setPanelOpen}
             setVehiclePanel={setVehiclePanelOpen}
@@ -325,9 +344,7 @@ const Home = () => {
         setConfirmRidePanel={setconfirmRidePanel}
         confirmRidePanel={confirmRidePanel}
         fare={fare}
-        setFare={setFare}
         fareLoading={fareLoading}
-        createRide={createRide}
       />
 
       <div
@@ -338,11 +355,11 @@ const Home = () => {
           setConfirmRidePanel={setconfirmRidePanel}
           setVehiclePanelOpen={setVehiclePanelOpen}
           setvehicleFound={setvehicleFound}
+          createRide={createRide}
           pickup={pickup}
           destination={destination}
           fare={fare}
-          selectedVehicle={selectedVehicle}
-          createRide={createRide}
+          vehicleType={selectedVehicle} //edited
         />
       </div>
 
@@ -351,9 +368,12 @@ const Home = () => {
         className="fixed bottom-0 left-0 right-0 z-20 w-full translate-y-full bg-white"
       >
         <LookingForDriver
+          ride={ride}
           setConfirmRidePanel={setconfirmRidePanel}
           setvehicleFound={setvehicleFound}
-          ride={ride}
+          pickup={pickup}
+          destination={destination}
+          fare={fare}
           vehicleType={selectedVehicle}
         />
       </div>
@@ -370,5 +390,4 @@ const Home = () => {
     </div>
   );
 };
-
 export default Home;

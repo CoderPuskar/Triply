@@ -1,15 +1,13 @@
 $kind: http-request
 description: ""
-url: http://localhost:4000/rides/create
+url: http://localhost:4000/users/login
 method: POST
 body:
   type: json
   content: |-
     {
-      "pickup": "Howrah Railway Station",
-      "destination": "Salt Lake Sector V",
-      "vehicleType": "car",
-      "fare":"123"
+        "email": "puskarmaity007@gmail.com",
+        "password": "123456789"
     }
 settings:
   strictSSL: false

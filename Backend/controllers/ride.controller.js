@@ -10,7 +10,7 @@ module.exports.createride = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { userId, pickup, destination, vehicleType } = req.body;
+  const { pickup, destination, vehicleType } = req.body;
 
   try {
     const ride = await rideService.createRide({
@@ -24,11 +24,46 @@ const pickupCoordinates = await mapService.getAddressCoordinates(pickup);
 console.log("Pickup Coordinates:", pickupCoordinates);
 const captainsNearby = await mapService.getCaptainsNearby(pickupCoordinates.latitude, pickupCoordinates.longitude , 5); // 5 km radius
 console.log("Captains Nearby:", captainsNearby);
-ride.otp=""
 
+const rideForCaptains = ride.toObject();
+delete rideForCaptains.otp;// Remove OTP before sending to captains
+
+captainsNearby.map(captain=>{
+
+  sendMessageToSocketId(captain.socketId,
+    { event: "newRide",
+     data: rideForCaptains })
+})
 
 
     return res.status(201).json(ride);
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+};
+
+module.exports.startRide = async (req, res) => {
+  const { rideId, otp } = req.body;
+
+  if (!rideId || !/^\d{6}$/.test(String(otp))) {
+    return res.status(400).json({ message: "Ride ID and a six-digit OTP are required" });
+  }
+
+  try {
+    const ride = await rideService.startRide({
+      rideId,
+      otp: String(otp),
+      captainId: req.captain._id,
+    });
+
+    if (ride.user?.socketId) {
+      sendMessageToSocketId(ride.user.socketId, {
+        event: "rideStarted",
+        data: ride,
+      });
+    }
+
+    return res.status(200).json(ride);
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }

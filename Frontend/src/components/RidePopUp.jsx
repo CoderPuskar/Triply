@@ -27,10 +27,15 @@ const RidePopUp = (props) => {
             src={cat}
             alt=""
           />
-          <h2 className="text-lg font-medium">Sakshi Singh</h2>
+          <h2 className="text-lg font-medium">
+            {props.ride?.user?.fullname
+              ? `${props.ride.user.fullname.firstname} ${props.ride.user.fullname.lastname}`
+              : "Passenger"}
+          </h2>
         </div>
-        {/* distance */}
-        <h5 className="text-lg font-semibold">2.2 KM</h5>
+        <h5 className="text-lg font-semibold">
+          {props.ride?.distance ?? "-"} KM
+        </h5>
       </div>
 
       {/* details */}
@@ -57,7 +62,7 @@ const RidePopUp = (props) => {
           <div className="flex items-center gap-5 p-3">
             <i className="ri-currency-line"></i>
             <div>
-              <h3 className="text-lg font-medium">₹195.20 </h3>
+              <h3 className="text-lg font-medium">₹{props.ride?.fare ?? "-"}</h3>
               <p className="text-sm -mt-1 text-gray-600">Cash Cash</p>
             </div>
           </div>

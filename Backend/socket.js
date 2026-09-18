@@ -61,6 +61,7 @@ const initializeSocket = (server) => {
             longitude: location.longitude,
           },
         });
+        console.log(`Updated location for captain ${userId}:`, location);
       } catch (err) {
         console.error("Error updating captain location:", err.message);
         socket.emit("error", { message: "Failed to update location" });
@@ -71,13 +72,19 @@ const initializeSocket = (server) => {
   return io;
 };
 
-const sendMessageToSocketId = (socketId, eventName, data) => {
+const sendMessageToSocketId = (socketId, messageObject) => {
+  console.log(
+    "Sending message to socket ID:",
+    socketId,
+    "Message:",
+    messageObject,
+  );
   if (!io) {
     console.warn("Socket not initialized yet");
     return;
   }
 
-  io.to(socketId).emit(eventName, data);
+  io.to(socketId).emit(messageObject.event, messageObject.data);
 };
 
 module.exports = {

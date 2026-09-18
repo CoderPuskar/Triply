@@ -1,5 +1,5 @@
 import React from "react";
-
+import white_car from "../assets/white car.png";
 const WaitingForDriver = (props) => {
   return (
     <div className="max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white px-5 pb-6 pt-2 sm:px-8">
@@ -15,13 +15,21 @@ const WaitingForDriver = (props) => {
       <div className="flex items-center justify-between gap-4 border-b border-gray-100 pb-4">
         <img
           className="h-20 w-28 rounded-lg object-cover"
-          src="https://swyft.pl/wp-content/uploads/2023/05/how-many-people-can-a-uberx-take.jpg"
+          src={white_car}
           alt="Maruti Suzuki Alto"
         />
         <div className="text-right">
-          <h2 className="text-lg font-medium">Rahul Sharma</h2>
-          <h4 className="text-xl font-semibold">DL 01 AB 1234</h4>
-          <p className="text-sm text-gray-600">Maruti Suzuki Alto</p>
+          <h2 className="text-lg font-medium">
+            {props.ride?.captain?.fullname
+              ? `${props.ride.captain.fullname.firstname} ${props.ride.captain.fullname.lastname || ""}`
+              : "Captain assigned"}
+          </h2>
+          <h4 className="text-xl font-semibold">
+            {props.ride?.captain?.vehicle?.numberplate || "Vehicle assigned"}
+          </h4>
+          <p className="text-sm text-gray-600">
+            {props.ride?.captain?.vehicle?.vehicleType || "Vehicle"}
+          </p>
           <p className="text-sm font-semibold">
             4.8 <i className="ri-star-fill text-yellow-500"></i>
           </p>
@@ -32,21 +40,21 @@ const WaitingForDriver = (props) => {
         <div className="flex items-center gap-4 border-b border-gray-100 py-3">
           <i className="ri-map-pin-user-fill text-lg text-gray-600"></i>
           <div>
-            <h3 className="text-lg font-medium">562/11-A</h3>
-            <p className="text-sm text-gray-600">Koramangala, Bengaluru</p>
+            <h3 className="text-lg font-medium">Pickup</h3>
+            <p className="text-sm text-gray-600">{props.ride?.pickup}</p>
           </div>
         </div>
         <div className="flex items-center gap-4 border-b border-gray-100 py-3">
           <i className="ri-map-pin-2-fill text-lg text-gray-600"></i>
           <div>
-            <h3 className="text-lg font-medium">100 Feet Road</h3>
-            <p className="text-sm text-gray-600">Indiranagar, Bengaluru</p>
+            <h3 className="text-lg font-medium">Destination</h3>
+            <p className="text-sm text-gray-600">{props.ride?.destination}</p>
           </div>
         </div>
         <div className="flex items-center gap-4 py-3">
           <i className="ri-currency-line text-lg text-gray-600"></i>
           <div>
-            <h3 className="text-lg font-medium">₹193.20</h3>
+            <h3 className="text-lg font-medium">₹{props.ride?.fare ?? "-"}</h3>
             <p className="text-sm text-gray-600">Cash</p>
           </div>
         </div>

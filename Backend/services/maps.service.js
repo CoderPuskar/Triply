@@ -1,4 +1,5 @@
 const axios = require("axios");
+const captainModel = require("../models/captain.models");
 
 // Get coordinates for a given address using OpenStreetMap API
 const getAddressCoordinates = async (address) => {
@@ -110,17 +111,20 @@ return response.data;
 };
 
 const getCaptainsNearby = async (latitude, longitude, radius) => {
- const captains = await Captain.find({
-  location: {
-    $geoWithin: {
-      $centerSphere: [
-        [longitude, latitude],
-        radius / 6378.1
-      ]
-    }
-  }
-});
- return captains;
+  const latitudeDelta = radius / 111.32;
+  const longitudeDelta =
+    radius / (111.32 * Math.cos((latitude * Math.PI) / 180));
+
+  return captainModel.find({
+    "location.latitude": {
+      $gte: latitude - latitudeDelta,
+      $lte: latitude + latitudeDelta,
+    },
+    "location.longitude": {
+      $gte: longitude - longitudeDelta,
+      $lte: longitude + longitudeDelta,
+    },
+  });
 };
 
 module.exports = {

@@ -11,54 +11,68 @@ import { SocketContext } from "../context/SocketContext";
 import { CaptainDataContext } from "../context/CaptainContext";
 
 const CaptainHome = () => {
-  const { sendMessage } = useContext(SocketContext);
+  const { sendMessage, receiveMessage } = useContext(SocketContext);
   const { captain } = useContext(CaptainDataContext);
 
 
-  // this is for sending the captain location to the server every 10 seconds
   useEffect(() => {
     const captainId = captain?._id;
 
-    if (!captainId || !navigator.geolocation) {
+    if (!captainId) {
       return;
     }
 
     sendMessage("join", { userType: "captain", userId: captainId });
 
-    const sendCaptainLocation = () => {
-      navigator.geolocation.getCurrentPosition(
-        ({ coords }) => {
-          sendMessage("update_location_captain", {
-            userId: captainId,
-            location: {
-              latitude: coords.latitude,
-              longitude: coords.longitude,
-            },
-          });
+    if (!navigator.geolocation) {
+      return;
+    }
+
+    const handlePosition = ({ coords }) => {
+      sendMessage("update_location_captain", {
+        userId: captainId,
+        location: {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
         },
-        (error) => {
-          console.error("Unable to get captain location:", error.message);
-        },
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 },
-      );
+      });
     };
 
-    sendCaptainLocation();
-    const locationInterval = setInterval(sendCaptainLocation, 10000);
+    const handlePositionError = (error) => {
+      const messages = {
+        1: "Location permission was denied.",
+        2: "Your location is unavailable.",
+        3: "Location lookup timed out; will keep trying.",
+      };
+      console.warn(messages[error.code] || "Unable to get captain location.");
+    };
 
-    return () => clearInterval(locationInterval);
+    const watchId = navigator.geolocation.watchPosition(
+      handlePosition,
+      handlePositionError,
+      { enableHighAccuracy: false, maximumAge: 30000, timeout: 20000 },
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
   }, [sendMessage, captain?._id]);
 
-
   // this is for ride request popup for captain to accept or ignore the ride request
-  const [ridePopupPanel, setRidePopupPanel] = useState(false); // temporary
+  const [ridePopupPanel, setRidePopupPanel] = useState(false); 
   // this is for confirm ride popup for captain to confirm the ride after accepting the ride request
   const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(null);
 
   // this is for the ride details
   const ridePopupPanelRef = useRef(null);
   const confirmRidePopupPanelRef = useRef(null);
-  const ride = null;
+  const [ride, setRide] = useState(null);
+
+  useEffect(() => {
+    return receiveMessage("newRide", (newRide) => {
+      console.log("Received new ride request:", newRide);
+      setRide(newRide);
+      setRidePopupPanel(true);
+    });
+  }, [receiveMessage]);
 
   function confirmRide() {
     setRidePopupPanel(false);

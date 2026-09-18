@@ -24,6 +24,14 @@ router.post(
   ridecontroller.createride,
 );
 
+router.post(
+  "/start",
+  authMiddleware.authCaptain,
+  body("rideId").isMongoId().withMessage("Valid ride ID is required"),
+  body("otp").isInt({ min: 100000, max: 999999 }).withMessage("A six-digit OTP is required"),
+  ridecontroller.startRide,
+);
+
 // this is the route for getting the fare for a ride. It requires authentication and validates the query parameters for pickup, destination, and vehicleType.
 router.get(
   "/fare",

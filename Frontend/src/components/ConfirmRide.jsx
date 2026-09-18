@@ -10,12 +10,6 @@ const vehicleImages = {
 };
 
 const ConfirmRide = (props) => {
-  const confirmRide = async () => {
-    if (!props.selectedVehicle) return;
-
-    await props.createRide(props.selectedVehicle);
-  };
-
   return (
     <div>
       <div className="bg-red-700"></div>
@@ -31,11 +25,11 @@ const ConfirmRide = (props) => {
       <h3 className="text-2xl font-semibold pt-4  pl-10 ">Confirm your Ride</h3>
 
       <div className="flex gap-5 justify-between flex-col items-center">
-        {/* selected vehicle image */}
+        {/* car image  */}
         <img
-          className="h-[25vh] mt-2"
-          src={vehicleImages[props.selectedVehicle]}
-          alt={`${props.selectedVehicle} vehicle`}
+          className="h-[25vh] mt-2 object-contain"
+          src={vehicleImages[props.vehicleType] || white_car}
+          alt="vehicle image"
         />
         {/* details  */}
         <div className="w-full flex flex-col gap-2">
@@ -43,32 +37,50 @@ const ConfirmRide = (props) => {
           <div className="flex px-8 gap-2 items-center  py-2 border-b-2 border-gray-100 mx-10">
             <i className="ri-map-pin-user-fill"></i>
             <div>
-              <h3>{props.pickup?.split(",")[0]?.trim()}</h3>
-              <p>{props.pickup?.split(",").slice(1).join(",").trim()}</p>
+              <h3>{props.pickup?.split(",")[0]?.trim() || "Pickup"}</h3>
+              <p>
+                {props.pickup?.split(",").slice(1).join(",").trim() ||
+                  props.pickup}
+              </p>
             </div>
           </div>
           {/* car location */}
           <div className="flex px-8 gap-2 items-center py-2 border-b-2 border-gray-100 mx-10">
             <i className="ri-map-pin-3-fill"></i>
             <div>
-              <h3>{props.destination?.split(",")[0]?.trim()}</h3>
-              <p>{props.destination?.split(",").slice(1).join(",").trim()}</p>
+              <h3>
+                {props.destination?.split(",")[0]?.trim() || "Destination"}
+              </h3>
+              <p>
+                {props.destination?.split(",").slice(1).join(",").trim() ||
+                  props.destination}
+              </p>
             </div>
           </div>
           {/* cash */}
           <div className="flex px-8 gap-2 items-center py-2  mx-10">
             <i className="ri-money-rupee-circle-fill"></i>
             <div>
-              <h3>₹{props.fare?.fare?.[props.selectedVehicle]}</h3>
+              <h3>
+                ₹
+                {props.fare?.fare?.[props.vehicleType] ??
+                  props.fare?.[props.vehicleType] ??
+                  "--"}
+              </h3>
               <p>Cash</p>
             </div>
           </div>
         </div>
         {/* confirmbutton  */}
-        <button className=" flex justify-center items-center  bg-green-600 text-white rounded-lg font-semibold cursor-pointer mb-5  w-[80%] py-2"
-        onClick={() => {
-          confirmRide();
-        }}
+        <button
+          className="flex justify-center items-center bg-green-600 text-white rounded-lg font-semibold cursor-pointer mb-5 w-[80%] py-2"
+          onClick={() => {
+            props.setvehicleFound(true);
+            props.setConfirmRidePanel(false);
+            if (typeof props.createRide === "function") {
+              props.createRide(props.vehicleType);
+            }
+          }}
         >
           Confirm Ride
         </button>
