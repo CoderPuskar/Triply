@@ -14,6 +14,7 @@ const ConfirmRidePopUp = (props) => {
                 `${import.meta.env.VITE_BASE_URL}/rides/start`,
                 { rideId: props.ride?._id, otp },
                 { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
+                console.log('Ride started successfully')
             )
             props.setConfirmRidePopupPanel(false)
             props.setRidePopupPanel(false)

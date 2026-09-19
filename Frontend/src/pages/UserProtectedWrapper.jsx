@@ -22,7 +22,7 @@ const UserProtectedWrapper = ({ children }) => {
       })
       .then((response) => {
         if (response.status === 200) {
-          setUser(response.data);
+          setUser(response.data.user);
           setLoading(false);
         }
       })
@@ -43,7 +43,7 @@ const UserProtectedWrapper = ({ children }) => {
 
 export default UserProtectedWrapper;
 
-// but when you refresh the page 
+// but when you refresh the page
 // the user will automaticaly loged out
 //  so then we sould not depend on user indtead of we need to rely on token
 // look at the user login page

@@ -39,9 +39,10 @@ const Home = () => {
   const { user } = useContext(UserDataContext);
 
   useEffect(() => {
-    // console.log(user)
-    if (user?._id) {
-      sendMessage("join", { userType: "user", userId: user._id });
+    const userId = user?._id;
+    
+    if (userId) {
+      sendMessage("join", { userType: "user", userId });
     }
   }, [sendMessage, user]);
 
@@ -214,9 +215,8 @@ const Home = () => {
   }
 
   async function createRide(selectedVehicle) {
-    // Create a ride with the selected vehicle type
-    const response = await axios
-      .post(
+    try {
+      const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/rides/create`,
         {
           pickup,
@@ -228,19 +228,18 @@ const Home = () => {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         },
-      )
-      .catch((error) => {
-        console.error("Error creating ride:", error);
-      });
+      );
 
-    if (response && response.data) {
       setRide(response.data);
-      console.log("Ride created:", response.data);
+      console.log("Ride created:");
       return response.data;
+    } catch (error) {
+      console.error(
+        "Error creating ride:",
+        error.response?.data ?? error.message,
+      );
+      return null;
     }
-
-    console.log("Ride creation response:", response);
-    return null;
   }
 
   return (
@@ -365,7 +364,7 @@ const Home = () => {
 
       <div
         ref={vehicleFoundRef}
-        className="fixed bottom-0 left-0 right-0 z-20 w-full translate-y-full bg-white"
+        className="fixed bottom-0 left-0 right-0 z-20 w-full translate-y-full bg-white h-[70vh] overflow-y-auto rounded-t-3xl"
       >
         <LookingForDriver
           ride={ride}

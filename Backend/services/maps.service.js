@@ -111,20 +111,15 @@ return response.data;
 };
 
 const getCaptainsNearby = async (latitude, longitude, radius) => {
-  const latitudeDelta = radius / 111.32;
-  const longitudeDelta =
-    radius / (111.32 * Math.cos((latitude * Math.PI) / 180));
-
-  return captainModel.find({
-    "location.latitude": {
-      $gte: latitude - latitudeDelta,
-      $lte: latitude + latitudeDelta,
-    },
-    "location.longitude": {
-      $gte: longitude - longitudeDelta,
-      $lte: longitude + longitudeDelta,
+ const captains= await captainModel.find({
+    location: {
+      $geoWithin: {
+        $centerSphere: [[longitude, latitude], radius / 6371],// radius in radians (Earth's radius is approximately 6371 km)
+      },
     },
   });
+
+  return captains;
 };
 
 module.exports = {

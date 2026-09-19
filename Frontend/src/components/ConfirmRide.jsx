@@ -74,12 +74,13 @@ const ConfirmRide = (props) => {
         {/* confirmbutton  */}
         <button
           className="flex justify-center items-center bg-green-600 text-white rounded-lg font-semibold cursor-pointer mb-5 w-[80%] py-2"
-          onClick={() => {
+          onClick={async () => {
+            const ride = await props.createRide(props.vehicleType);
+
+            if (!ride) return;
+
             props.setvehicleFound(true);
             props.setConfirmRidePanel(false);
-            if (typeof props.createRide === "function") {
-              props.createRide(props.vehicleType);
-            }
           }}
         >
           Confirm Ride

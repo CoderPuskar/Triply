@@ -24,7 +24,7 @@ const SocketProvider = ({ children }) => {
   }, []);
 
   const sendMessage = useCallback((eventName, message) => {
-    // console.log(`Sending message to server: ${eventName}`, message);
+     console.log(`Sending message to server: ${eventName}`, message);
     socket.emit(eventName, message);
   }, []);
 
