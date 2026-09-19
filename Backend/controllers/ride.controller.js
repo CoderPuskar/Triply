@@ -2,6 +2,7 @@ const rideService = require("../services/ride.service");
 const { validationResult } = require("express-validator");
 const mapService = require("../services/maps.service");
 const {sendMessageToSocketId} = require("../socket");
+rideModels = require("../models/ride.model");
 
 module.exports.createride = async (req, res) => {
   const errors = validationResult(req);
@@ -10,7 +11,7 @@ module.exports.createride = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { pickup, destination, vehicleType } = req.body;
+  const {  pickup, destination, vehicleType } = req.body;
 
   try {
     const ride = await rideService.createRide({
@@ -25,15 +26,20 @@ console.log("Pickup Coordinates:", pickupCoordinates);
 const captainsNearby = await mapService.getCaptainsNearby(pickupCoordinates.latitude, pickupCoordinates.longitude , 5); // 5 km radius
 console.log("Captains Nearby:", captainsNearby);
 
+ 
 const rideForCaptains = ride.toObject();
 delete rideForCaptains.otp;// Remove OTP before sending to captains
+
+const rideWithUser= await rideModels.findOne({ _id: ride._id }).populate("user", "fullname email phone");
 
 captainsNearby.map(captain=>{
 
   sendMessageToSocketId(captain.socketId,
     { event: "newRide",
-     data: rideForCaptains })
-})
+     data: rideWithUser
+    }
+  )
+     })
 
 
     return res.status(201).json(ride);
@@ -41,6 +47,8 @@ captainsNearby.map(captain=>{
     return res.status(400).json({ message: err.message });
   }
 };
+
+
 
 module.exports.startRide = async (req, res) => {
   const { rideId, otp } = req.body;
@@ -68,6 +76,8 @@ module.exports.startRide = async (req, res) => {
     return res.status(400).json({ message: err.message });
   }
 };
+
+
 
 module.exports.getFare = async (req, res) => {
   const { pickup, destination } = req.query;
