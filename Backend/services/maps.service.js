@@ -94,8 +94,7 @@ const getAutoCompleteSuggestions = async (input) => {
       throw new Error("No suggestions found");
     }
 
-return response.data;
-
+    return response.data;
 
     // return response.data.map((location) => ({
 
@@ -103,7 +102,6 @@ return response.data;
     //   latitude: parseFloat(location.lat),
     //   longitude: parseFloat(location.lon),
     // }));
-
   } catch (error) {
     console.error("Error fetching suggestions:", error.message);
     throw error;
@@ -111,10 +109,10 @@ return response.data;
 };
 
 const getCaptainsNearby = async (latitude, longitude, radius) => {
- const captains= await captainModel.find({
+  const captains = await captainModel.find({
     location: {
       $geoWithin: {
-        $centerSphere: [[longitude, latitude], radius / 6371],// radius in radians (Earth's radius is approximately 6371 km)
+        $centerSphere: [[longitude, latitude], radius / 6371], // radius in radians (Earth's radius is approximately 6371 km)
       },
     },
   });

@@ -22,7 +22,7 @@ const captainSchema = new mongoose.Schema({
   //   type: Number,
   //   required: true,
   // },
-  
+
   status: {
     type: String,
     enum: ["active", "inactive"],
@@ -53,11 +53,9 @@ const captainSchema = new mongoose.Schema({
   location: {
     latitude: {
       type: Number,
-      required: true,
     },
     longitude: {
       type: Number,
-      required: true,
     },
   },
   email: {
