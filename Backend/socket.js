@@ -1,6 +1,7 @@
 let io;
 const userModel = require("./models/user.model");
 const captainModel = require("./models/captain.models");
+const rideModel = require("./models/ride.models");
 
 const initializeSocket = (server) => {
   const { Server } = require("socket.io");
@@ -19,7 +20,7 @@ const initializeSocket = (server) => {
       try {
         const { userId, userType } = data || {};
 
-        if (!userId || !userType) {
+        if (!userId || !["user", "captain"].includes(userType)) {
           return;
         }
         console.log(
@@ -60,8 +61,27 @@ const initializeSocket = (server) => {
             latitude: location.latitude,
             longitude: location.longitude,
           },
+          geoLocation: {
+            type: "Point",
+            coordinates: [location.longitude, location.latitude],
+          },
         });
         console.log(`Updated location for captain ${userId}:`, location);
+
+        // forward live location to the user on this captain's active ride
+        const activeRide = await rideModel
+          .findOne({
+            captain: userId,
+            status: { $in: ["accepted", "ongoing"] },
+          })
+          .populate("user", "socketId");
+
+        if (activeRide?.user?.socketId) {
+          sendMessageToSocketId(activeRide.user.socketId, {
+            event: "captain_live_location",
+            data: { location: { latitude: location.latitude, longitude: location.longitude } },
+          });
+        }
       } catch (err) {
         console.error("Error updating captain location:", err.message);
         socket.emit("error", { message: "Failed to update location" });

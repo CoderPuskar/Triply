@@ -57,7 +57,7 @@ const CaptainHome = () => {
   }, [sendMessage, captain?._id]);
 
   // this is for ride request popup for captain to accept or ignore the ride request
-  const [ridePopupPanel, setRidePopupPanel] = useState(false); 
+  const [ridePopupPanel, setRidePopupPanel] = useState(true); 
   // this is for confirm ride popup for captain to confirm the ride after accepting the ride request
   const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(null);
 
@@ -69,6 +69,7 @@ const CaptainHome = () => {
   useEffect(() => {
     return receiveMessage("newRide", (newRide) => {
       console.log("Received new ride request:", newRide);
+      console.log("User details:", newRide.user);
       setRide(newRide);
       setRidePopupPanel(true);
     });

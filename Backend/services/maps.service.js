@@ -108,9 +108,10 @@ const getAutoCompleteSuggestions = async (input) => {
   }
 };
 
+//noted
 const getCaptainsNearby = async (latitude, longitude, radius) => {
   const captains = await captainModel.find({
-    location: {
+    geoLocation: {
       $geoWithin: {
         $centerSphere: [[longitude, latitude], radius / 6371], // radius in radians (Earth's radius is approximately 6371 km)
       },

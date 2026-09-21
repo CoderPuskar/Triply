@@ -38,6 +38,8 @@ const Home = () => {
   const { sendMessage, receiveMessage } = useContext(SocketContext);
   const { user } = useContext(UserDataContext);
 
+  const [captainLocation, setCaptainLocation] = useState(null);
+
   useEffect(() => {
     const userId = user?._id;
     
@@ -54,6 +56,13 @@ const Home = () => {
     });
   }, [receiveMessage]);
 
+  useEffect(() => {
+    return receiveMessage("captain_live_location", (data) => {
+      setCaptainLocation(data.location);
+      console.log("Received captain live location:", data.location);
+    });
+  }, [receiveMessage]);
+
   const submitHandler = (e) => {
     e.preventDefault();
   };
@@ -65,7 +74,7 @@ const Home = () => {
         // Animate the panel to open
         gsap.to(panelRef.current, {
           height: "70%",
-          padding: "8px 20px 20px",
+          padding: "0px 20px 20px",
           opacity: 1,
         });
 

@@ -21,14 +21,15 @@ module.exports.createride = async (req, res) => {
       vehicleType,
     });
 
-    const pickupCoordinates = await mapService.getAddressCoordinates(pickup);
-    console.log("Pickup Coordinates:", pickupCoordinates);
-    const captainsNearby = await mapService.getCaptainsNearby(
-      pickupCoordinates.latitude,
-      pickupCoordinates.longitude,
-      5,
-    ); // 5 km radius
-    console.log("Captains Nearby:", captainsNearby);
+    // const pickupCoordinates = await mapService.getAddressCoordinates(pickup);
+    // console.log("Pickup Coordinates:", pickupCoordinates);
+    
+    // const captainsNearby = await mapService.getCaptainsNearby(
+    //   pickupCoordinates.latitude,
+    //   pickupCoordinates.longitude,
+    //   5,
+    // ); // 5 km radius
+    // console.log("Captains Nearby:", captainsNearby);
 
     const rideForCaptains = ride.toObject();
     delete rideForCaptains.otp; // Remove OTP before sending to captains
@@ -40,8 +41,13 @@ module.exports.createride = async (req, res) => {
         5,
       );
 
+    const rideWithUser = await rideModel.findById(ride._id)
+      .populate("user")
+        .lean();
+
       captainsNearby.forEach((captain) => {
         if (captain.socketId) {
+          console.log("User created ride sent to captain:", rideWithUser);
           sendMessageToSocketId(captain.socketId, {
             event: "newRide",
             data: rideWithUser,
@@ -53,19 +59,6 @@ module.exports.createride = async (req, res) => {
         "Map coordinates / captain lookup fallback:",
         mapErr.message,
       );
-      const fallbackCaptains = await mapService.getCaptainsNearby(
-        null,
-        null,
-        5,
-      );
-      fallbackCaptains.forEach((captain) => {
-        if (captain.socketId) {
-          sendMessageToSocketId(captain.socketId, {
-            event: "newRide",
-            data: rideWithUser,
-          });
-        }
-      });
     }
 
     return res.status(201).json(ride);
