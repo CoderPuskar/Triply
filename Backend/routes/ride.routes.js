@@ -28,7 +28,9 @@ router.post(
   "/start",
   authMiddleware.authCaptain,
   body("rideId").isMongoId().withMessage("Valid ride ID is required"),
-  body("otp").isInt({ min: 100000, max: 999999 }).withMessage("A six-digit OTP is required"),
+  body("otp")
+    .isInt({ min: 100000, max: 999999 })
+    .withMessage("A six-digit OTP is required"),
   ridecontroller.startRide,
 );
 
@@ -52,6 +54,13 @@ router.get(
     .isIn(["auto", "car", "moto"])
     .withMessage("Invalid vehicle type"),
   ridecontroller.getFare,
+);
+
+router.post(
+  "/confirm",
+  authMiddleware.authCaptain,
+  body("rideId").isMongoId().withMessage("Valid ride ID is required"),
+  ridecontroller.confirmRide,
 );
 
 module.exports = router;

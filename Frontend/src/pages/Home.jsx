@@ -11,6 +11,8 @@ import LookingForDriver from "../components/LookingForDriver";
 import WaitingForDriver from "../components/WaitingForDriver";
 import { SocketContext } from "../context/SocketContext";
 import { UserDataContext } from "../context/UserContext";
+import { useNavigate } from "react-router-dom";
+
 
 const LazyMap = lazy(() => import("../components/Map"));
 
@@ -28,6 +30,8 @@ const Home = () => {
   const [fareLoading, setFareLoading] = useState(false);
   const [activeInput, setActiveInput] = useState("pickup");
 
+  const navigate = useNavigate();
+
   const panelCloseRef = useRef(null);
   const panelRef = useRef(null);
   const vehiclePanelRef = useRef(null);
@@ -42,7 +46,7 @@ const Home = () => {
 
   useEffect(() => {
     const userId = user?._id;
-    
+
     if (userId) {
       sendMessage("join", { userType: "user", userId });
     }
@@ -50,22 +54,39 @@ const Home = () => {
 
   useEffect(() => {
     return receiveMessage("rideStarted", (startedRide) => {
+      navigate("/riding");
       setRide(startedRide);
       setvehicleFound(false);
       setWaitingForDriver(true);
     });
-  }, [receiveMessage]);
+  }, [navigate, receiveMessage]);
 
   useEffect(() => {
     return receiveMessage("captain_live_location", (data) => {
+      if (!["accepted", "ongoing"].includes(ride?.status)) {
+        return;
+      }
+
       setCaptainLocation(data.location);
       console.log("Received captain live location:", data.location);
     });
-  }, [receiveMessage]);
+  }, [receiveMessage, ride?.status]);
 
   const submitHandler = (e) => {
     e.preventDefault();
   };
+
+  useEffect(() => {
+    return receiveMessage("rideConfirmed", (confirmedRide) => {
+      setRide(confirmedRide);
+      setvehicleFound(false);
+      setWaitingForDriver(true);
+      console.log("Ride accepted:", {
+        status: confirmedRide.status,
+        captain: confirmedRide.captain,
+      });
+    });
+  }, [receiveMessage]);
 
   // GSAP animation for opening and closing the panel of location search
   useGSAP(

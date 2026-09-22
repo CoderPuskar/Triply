@@ -23,7 +23,7 @@ module.exports.createride = async (req, res) => {
 
     // const pickupCoordinates = await mapService.getAddressCoordinates(pickup);
     // console.log("Pickup Coordinates:", pickupCoordinates);
-    
+
     // const captainsNearby = await mapService.getCaptainsNearby(
     //   pickupCoordinates.latitude,
     //   pickupCoordinates.longitude,
@@ -31,8 +31,6 @@ module.exports.createride = async (req, res) => {
     // ); // 5 km radius
     // console.log("Captains Nearby:", captainsNearby);
 
-    const rideForCaptains = ride.toObject();
-    delete rideForCaptains.otp; // Remove OTP before sending to captains
     try {
       const pickupCoordinates = await mapService.getAddressCoordinates(pickup);
       const captainsNearby = await mapService.getCaptainsNearby(
@@ -41,9 +39,11 @@ module.exports.createride = async (req, res) => {
         5,
       );
 
-    const rideWithUser = await rideModel.findById(ride._id)
-      .populate("user")
+      const rideWithUser = await rideModel
+        .findById(ride._id)
+        .populate("user")
         .lean();
+      delete rideWithUser.otp;
 
       captainsNearby.forEach((captain) => {
         if (captain.socketId) {
@@ -107,6 +107,34 @@ module.exports.getFare = async (req, res) => {
   try {
     const fare = await rideService.getFare(pickup, destination);
     return res.status(200).json(fare);
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+};
+
+
+module.exports.confirmRide = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { rideId } = req.body;
+
+  try {
+    const ride = await rideService.confirmRide({
+      rideId,
+      captain: req.captain,
+    });
+
+    if (ride.user?.socketId) {
+      sendMessageToSocketId(ride.user.socketId, {
+        event: "rideConfirmed",
+        data: ride,
+      });
+    }
+
+    return res.status(200).json(ride);
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }

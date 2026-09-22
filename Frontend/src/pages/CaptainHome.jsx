@@ -1,5 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 import CaptainDetails from "../components/CaptainDetails";
 import RidePopUp from "../components/RidePopUp";
 import { useGSAP } from "@gsap/react";
@@ -13,7 +14,6 @@ import { CaptainDataContext } from "../context/CaptainContext";
 const CaptainHome = () => {
   const { sendMessage, receiveMessage } = useContext(SocketContext);
   const { captain } = useContext(CaptainDataContext);
-
 
   useEffect(() => {
     const captainId = captain?._id;
@@ -57,9 +57,9 @@ const CaptainHome = () => {
   }, [sendMessage, captain?._id]);
 
   // this is for ride request popup for captain to accept or ignore the ride request
-  const [ridePopupPanel, setRidePopupPanel] = useState(true); 
+  const [ridePopupPanel, setRidePopupPanel] = useState(false);
   // this is for confirm ride popup for captain to confirm the ride after accepting the ride request
-  const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(null);
+  const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(false);
 
   // this is for the ride details
   const ridePopupPanelRef = useRef(null);
@@ -75,7 +75,21 @@ const CaptainHome = () => {
     });
   }, [receiveMessage]);
 
-  function confirmRide() {
+  async function confirmRide() {
+    await axios.post(
+      `${import.meta.env.VITE_BASE_URL}/rides/confirm`,
+      {
+        rideId: ride._id,
+        captainId: captain._id,
+        captain,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      },
+    );
+
     setRidePopupPanel(false);
     setConfirmRidePopupPanel(true);
   }

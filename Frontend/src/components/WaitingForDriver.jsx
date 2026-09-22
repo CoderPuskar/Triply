@@ -18,6 +18,7 @@ const WaitingForDriver = (props) => {
           src={white_car}
           alt="Maruti Suzuki Alto"
         />
+        <div className="flex-1"></div>
         <div className="text-right">
           <h2 className="text-lg font-medium">
             {props.ride?.captain?.fullname
@@ -33,6 +34,7 @@ const WaitingForDriver = (props) => {
           <p className="text-sm font-semibold">
             4.8 <i className="ri-star-fill text-yellow-500"></i>
           </p>
+          <h1 className="text-lg  font-bold">OTP: {props.ride?.otp}</h1>
         </div>
       </div>
 
