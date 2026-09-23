@@ -28,6 +28,28 @@ async function getCoordinates(req, res) {
   }
 }
 
+async function getAddressFromCoordinates(req, res) {
+  try {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const address = await mapsService.getAddressFromCoordinates({
+      latitude: Number(req.query.latitude),
+      longitude: Number(req.query.longitude),
+    });
+
+    return res.status(200).json({ address });
+  } catch (error) {
+    console.error("Error reverse geocoding coordinates:", error.message);
+    return res.status(error.message === "Location not found" ? 404 : 500).json({
+      error: error.message,
+    });
+  }
+}
+
 // Get road distance and estimated travel time
 async function getDistanceAndTime(req, res, next) {
   try {
@@ -86,6 +108,7 @@ async function getAutoCompleteSuggestions(req, res, next) {
 
 module.exports = {
   getCoordinates,
+  getAddressFromCoordinates,
   getDistanceAndTime,
   getAutoCompleteSuggestions,
 };

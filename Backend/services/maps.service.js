@@ -35,6 +35,34 @@ const getAddressCoordinates = async (address) => {
   }
 };
 
+const getAddressFromCoordinates = async ({ latitude, longitude }) => {
+  try {
+    const response = await axios.get(
+      "https://nominatim.openstreetmap.org/reverse",
+      {
+        params: {
+          lat: latitude,
+          lon: longitude,
+          format: "json",
+        },
+        headers: {
+          "Accept-Language": "en",
+          "User-Agent": "Triply/1.0",
+        },
+      },
+    );
+
+    if (!response.data?.display_name) {
+      throw new Error("Location not found");
+    }
+
+    return response.data.display_name;
+  } catch (error) {
+    console.error("Reverse geocoding error:", error.message);
+    throw error;
+  }
+};
+
 // Get road distance and estimated travel time
 
 const getDistanceAndTime = async (origin, destination) => {
@@ -123,6 +151,7 @@ const getCaptainsNearby = async (latitude, longitude, radius) => {
 
 module.exports = {
   getAddressCoordinates,
+  getAddressFromCoordinates,
   getDistanceAndTime,
   getAutoCompleteSuggestions,
   getCaptainsNearby,

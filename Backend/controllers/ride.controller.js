@@ -139,3 +139,30 @@ module.exports.confirmRide = async (req, res) => {
     return res.status(400).json({ message: err.message });
   }
 };
+
+module.exports.endRide = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { rideId } = req.body;
+
+  try {
+    const ride = await rideService.endRide({
+      rideId,
+      captainId: req.captain._id,
+    });
+
+    if (ride.user?.socketId) {
+      sendMessageToSocketId(ride.user.socketId, {
+        event: "rideEnded",
+        data: ride,
+      });
+    }
+
+    return res.status(200).json(ride);
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+};

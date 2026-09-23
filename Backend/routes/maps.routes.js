@@ -12,6 +12,14 @@ router.get(
 );
 
 router.get(
+  "/reverse-geocode",
+  query("latitude").isFloat({ min: -90, max: 90 }),
+  query("longitude").isFloat({ min: -180, max: 180 }),
+  authMiddleware.authUser,
+  mapController.getAddressFromCoordinates,
+);
+
+router.get(
   "/get-distance-time",
   query("origin").isString().trim().isLength({ min: 3 }).notEmpty(),
   query("destination").isString().trim().isLength({ min: 3 }).notEmpty(),

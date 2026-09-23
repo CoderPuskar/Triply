@@ -1,12 +1,38 @@
-import React from "react";
-import { useEffect, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useContext, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import white_car from "../assets/white car.png";
 import map from "../assets/map_img.png";
+import { SocketContext } from "../context/SocketContext";
+
 
 const Riding = () => {
+  const { state } = useLocation();
+  let ride = state?.ride;
+  const { receiveMessage } = useContext(SocketContext);
+  const navigate = useNavigate();
+
+  if (!ride) {
+    try {
+      ride = JSON.parse(localStorage.getItem("activeRide"));
+    } catch {
+      ride = null;
+    }
+  }
+
   useEffect(() => {
-    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "auto" });
+    return receiveMessage("rideEnded", (endedRide) => {
+      if (endedRide._id === ride?._id) {
+        localStorage.removeItem("activeRide");
+        navigate("/home");
+      }
+    });
+  }, [navigate, receiveMessage, ride?._id]);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "auto",
+    });
   }, []);
 
   return (
@@ -28,26 +54,42 @@ const Riding = () => {
           <img className="h-30" src={white_car} alt="" />
           {/* car details */}
           <div className="text-right">
-            <h2 className="text-lg font-medium capitalize">John Doe</h2>
-            <h4 className="text-xl font-semibold -mt-1 -mb-1">DL1C1234</h4>
-            <p className="text-sm text-gray-600">Maruti Suzuki Alto</p>
+            <h2 className="text-lg font-medium capitalize">
+              {ride?.captain?.fullname?.firstname ?? "Driver"}
+            </h2>
+            <h4 className="text-xl font-semibold -mt-1 -mb-1">
+              {ride?.captain?.vehicle?.numberplate ?? "Plate unavailable"}
+            </h4>
+            <p className="text-sm text-gray-600 capitalize">
+              {ride?.captain?.vehicle?.vehicalType ?? "Vehicle unavailable"}
+            </p>
           </div>
         </div>
-
         {/* payment details */}
         <div className="flex gap-2 justify-between flex-col items-center">
           <div className="w-full bg-gray-100 rounded-lg py-7 px-5 mt-5">
             <div className="flex items-center gap-5 p-3 border-b-2">
               <i className="text-lg ri-map-pin-2-fill"></i>
               <div>
-                <h3 className="text-lg font-medium">562/11-A</h3>
-                <p className="text-sm -mt-1 text-gray-600">123 Main Street</p>
+                <h3 className="text-lg font-medium">Pickup</h3>
+                <p className="text-sm -mt-1 text-gray-600">
+                  {ride?.pickup ?? "Pickup unavailable"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-5 p-3 border-b-2">
+              <i className="text-lg ri-map-pin-2-fill"></i>
+              <div>
+                <h3 className="text-lg font-medium">Destination</h3>
+                <p className="text-sm -mt-1 text-gray-600">
+                  {ride?.destination ?? "Destination unavailable"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-5 p-3">
               <i className="ri-currency-line"></i>
               <div>
-                <h3 className="text-lg font-medium">₹192.20 </h3>
+                <h3 className="text-lg font-medium">₹{ride?.fare ?? "--"}</h3>
                 <p className="text-sm -mt-1 text-gray-600">Cash Cash</p>
               </div>
             </div>

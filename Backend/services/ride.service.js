@@ -1,5 +1,4 @@
 const rideModel = require("../models/ride.models");
-const { sendMessageToSocketId } = require("../socket");
 const mapsService = require("./maps.service");
 const crypto = require("crypto");
 
@@ -165,22 +164,18 @@ module.exports.startRide = async ({ rideId, otp, captainId }) => {
   if (ride.otp !== otp) {
     throw new Error("Invalid OTP");
   }
-await rideModel.findOneAndUpdate(
+  const startedRide = await rideModel.findOneAndUpdate(
     { _id: rideId },
     { status: "ongoing", captain: captainId },
     { new: true }
   );
-  sendMessageToSocketId(ride.user.socketId, {
-    event: "rideStarted",
-    data: ride,
-  });
 
-  await ride.populate([
+  await startedRide.populate([
     { path: "user", select: "socketId fullname" },
     { path: "captain", select: "fullname vehicle" },
   ]);
-  ride.otp = undefined;
-  return ride;
+  startedRide.otp = undefined;
+  return startedRide;
 };
 
 module.exports.confirmRide = async ({
@@ -208,3 +203,60 @@ module.exports.confirmRide = async ({
     return ride;
 
 }
+
+module.exports.endRide = async ({ rideId, captainId }) => {
+
+  // Find the ride first
+  const ride = await rideModel.findById(rideId);
+
+  if (!ride) {
+    throw new Error("Ride not found");
+  }
+
+  // Ride must currently be ongoing
+  if (ride.status !== "ongoing") {
+    throw new Error("Ride is not ongoing");
+  }
+
+  // Verify this captain is assigned to this ride
+  if (String(ride.captain) !== String(captainId)) {
+    throw new Error("You are not the captain of this ride");
+  }
+
+  // Complete the ride
+  const endedRide = await rideModel.findOneAndUpdate(
+    {
+      _id: rideId,
+      captain: captainId,
+      status: "ongoing"
+    },
+    {
+      $set: {
+        status: "completed"
+      },
+      $unset: {
+        otp: ""
+      }
+    },
+    {
+      new: true
+    }
+  );
+
+  if (!endedRide) {
+    throw new Error("Ride could not be completed");
+  }
+
+  await endedRide.populate([
+    {
+      path: "user",
+      select: "socketId fullname"
+    },
+    {
+      path: "captain",
+      select: "fullname vehicle"
+    }
+  ]);
+
+  return endedRide;
+};

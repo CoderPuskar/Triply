@@ -1,16 +1,15 @@
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import CaptainDetails from "../components/CaptainDetails";
-import RidePopUp from "../components/RidePopUp";
+import { Link, useLocation } from "react-router-dom";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import ConfirmRidePopUp from "../components/ConfirmRidePopUp";
 import map from "../assets/map_img.png";
 import pilot from "../assets/pilot.png";
 import FinishRide from "../components/FinishRide";
 
 const CaptainRiding = () => {
-  const [finishRidePanel, setfinishRidePanel] = useState(false);
+  const { state } = useLocation();
+  const ride = state?.ride;
+  const [finishRidePanel, setFinishRidePanel] = useState(false);
   const finishRidePanelRef = useRef(null);
 
   useGSAP(
@@ -60,22 +59,35 @@ const CaptainRiding = () => {
       <div
         className="h-1/5 p-6 bg-yellow-400 flex items-center justify-between relative"
         onClick={() => {
-          setfinishRidePanel(true);
+          setFinishRidePanel(true);
         }}
       >
         <h5 className=" text-center w-full left-0 flex top-0 absolute justify-center items-center p-2 rounded-lg text-black font-semibold">
           <i className="text-3xl ri-arrow-up-wide-line "></i>
         </h5>
-        <h4 className="text-xl font-semibold">4KM away </h4>
-        <button className=" bg-green-600 rounded-lg text-white font-semibold px-10 p-3">
+        <div>
+          <h4 className="text-xl font-semibold">
+            {ride?.distance ? `${ride.distance} KM away` : "Ride in progress"}
+          </h4>
+          <p className="text-sm text-gray-700 capitalize">
+            {ride?.user?.fullname
+              ? `${ride.user.fullname.firstname} ${ride.user.fullname.lastname || ""}`
+              : "Passenger"}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="bg-green-600 rounded-lg text-white font-semibold px-10 p-3"
+          onClick={() => setFinishRidePanel(true)}
+        >
           Complete Ride
         </button>
       </div>
       <div
         ref={finishRidePanelRef}
-        className=" fixed w-full z-10 bottom-0 bg-white pt-12"
+        className="fixed w-full z-10 bottom-0 translate-y-full bg-white pt-12"
       >
-        <FinishRide />
+        <FinishRide ride={ride} setFinishRidePanel={setFinishRidePanel} />
       </div>
     </div>
   );

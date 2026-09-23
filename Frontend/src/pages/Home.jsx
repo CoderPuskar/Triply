@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useContext } from "react";
+import { useRef, useState, useEffect, useContext, useCallback } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { lazy, Suspense } from "react";
@@ -43,6 +43,73 @@ const Home = () => {
   const { user } = useContext(UserDataContext);
 
   const [captainLocation, setCaptainLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [destinationLocation, setDestinationLocation] = useState(null);
+
+  const selectCoordinates = useCallback(
+    async (location, field = activeInput) => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/maps/reverse-geocode`,
+          {
+            params: location,
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
+
+        if (field === "pickup") {
+          setPickup(response.data.address);
+        } else {
+          setDestination(response.data.address);
+          setDestinationLocation(location);
+        }
+        setPanelOpen(false);
+      } catch (error) {
+        console.error("Unable to find an address for this location:", error);
+      }
+    },
+    [activeInput],
+  );
+
+  const handleMapLocationSelect = useCallback(
+    (location) => selectCoordinates(location),
+    [selectCoordinates],
+  );
+
+  const handleSearchLocationSelect = (location, field) => {
+    if (field !== "destination") {
+      return;
+    }
+
+    const latitude = Number(location.lat ?? location.latitude);
+    const longitude = Number(location.lon ?? location.longitude);
+
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      setDestinationLocation({ latitude, longitude });
+    }
+    setPanelOpen(false);
+  };
+
+  const useLiveLocationForPickup = () => {
+    setActiveInput("pickup");
+
+    if (userLocation) {
+      selectCoordinates(userLocation, "pickup");
+      return;
+    }
+
+    navigator.geolocation?.getCurrentPosition(
+      ({ coords }) =>
+        selectCoordinates(
+          { latitude: coords.latitude, longitude: coords.longitude },
+          "pickup",
+        ),
+      (error) => console.warn("Unable to get your location:", error.message),
+      { enableHighAccuracy: true, timeout: 20_000 },
+    );
+  };
 
   useEffect(() => {
     const userId = user?._id;
@@ -54,7 +121,8 @@ const Home = () => {
 
   useEffect(() => {
     return receiveMessage("rideStarted", (startedRide) => {
-      navigate("/riding");
+      localStorage.setItem("activeRide", JSON.stringify(startedRide));
+      navigate("/riding", { state: { ride: startedRide } });
       setRide(startedRide);
       setvehicleFound(false);
       setWaitingForDriver(true);
@@ -284,7 +352,11 @@ const Home = () => {
       <div className="absolute inset-0 z-0">
         {/* <img src={map_img} alt="map" className="h-full w-full object-cover" /> */}
         <Suspense fallback={<div className="h-full w-full bg-gray-300"></div>}>
-          <LazyMap />
+          <LazyMap
+            destinationLocation={destinationLocation}
+            onLocationSelect={handleMapLocationSelect}
+            onUserLocationChange={setUserLocation}
+          />
         </Suspense>
       </div>
 
@@ -311,7 +383,7 @@ const Home = () => {
             }}
           >
             {/* Connecting line */}
-            <div className="absolute left-5 top-1/2 h-16 w-1 -translate-y-1/2 rounded-full bg-gray-700"></div>
+            <div className="absolute left-5 top-1/2 h-20 w-1 -translate-y-1/2 rounded-full bg-gray-700"></div>
 
             {/* Pickup input */}
             <input
@@ -326,6 +398,15 @@ const Home = () => {
               placeholder="Add a pick-up location"
             />
 
+            <button
+              type="button"
+              onClick={useLiveLocationForPickup}
+              className="w-full pl-10 p-2 flex items-center gap-2 text-sm font-medium text-blue-700"
+            >
+              <i className="ri-navigation-fill"></i>
+              Use my live location
+            </button>
+
             {/* Destination input */}
             <input
               type="text"
@@ -334,7 +415,10 @@ const Home = () => {
                 setActiveInput("destination");
                 setPanelOpen(true);
               }}
-              onChange={(e) => setDestination(e.target.value)}
+              onChange={(e) => {
+                setDestination(e.target.value);
+                setDestinationLocation(null);
+              }}
               className="mt-3 w-full rounded-lg bg-[#eee] px-12 py-2 text-lg"
               placeholder="Enter your destination"
             />
@@ -359,6 +443,7 @@ const Home = () => {
             activeInput={activeInput}
             setPickup={setPickup}
             setDestination={setDestination}
+            onLocationSelect={handleSearchLocationSelect}
           />
         </div>
       </div>

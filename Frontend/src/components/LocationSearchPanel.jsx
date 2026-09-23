@@ -8,6 +8,7 @@ const LocationSearchPanel = ({
   activeInput,
   setPickup,
   setDestination,
+  onLocationSelect,
 }) => {
   // This will contain suggestions received from your backend
   const [locations, setLocations] = useState([]);
@@ -71,7 +72,7 @@ const LocationSearchPanel = ({
       setPickup(locationName);
     } else {
       setDestination(locationName);
-      
+      onLocationSelect?.(location, "destination");
     }
 
     // setPanelOpen(false);
@@ -121,4 +122,3 @@ const LocationSearchPanel = ({
 };
 
 export default LocationSearchPanel;
-
