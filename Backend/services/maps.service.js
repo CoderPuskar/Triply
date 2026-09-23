@@ -99,6 +99,27 @@ const getDistanceAndTime = async (origin, destination) => {
   }
 };
 
+const getRouteCoordinates = async ({ origin, destination }) => {
+  try {
+    const response = await axios.get(
+      `https://router.project-osrm.org/route/v1/driving/` +
+        `${origin.longitude},${origin.latitude};` +
+        `${destination.longitude},${destination.latitude}`,
+      { params: { overview: "full", geometries: "geojson" } },
+    );
+
+    const coordinates = response.data?.routes?.[0]?.geometry?.coordinates;
+    if (!coordinates) {
+      throw new Error("Route not found");
+    }
+
+    return coordinates.map(([longitude, latitude]) => [latitude, longitude]);
+  } catch (error) {
+    console.error("Route lookup error:", error.message);
+    throw error;
+  }
+};
+
 // Get auto-complete suggestions for a given input
 const getAutoCompleteSuggestions = async (input) => {
   try {
@@ -153,6 +174,7 @@ module.exports = {
   getAddressCoordinates,
   getAddressFromCoordinates,
   getDistanceAndTime,
+  getRouteCoordinates,
   getAutoCompleteSuggestions,
   getCaptainsNearby,
 };

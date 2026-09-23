@@ -57,6 +57,7 @@ const initializeSocket = (server) => {
 
       try {
         await captainModel.findByIdAndUpdate(userId, {
+          socketId: socket.id,
           location: {
             latitude: location.latitude,
             longitude: location.longitude,
@@ -79,12 +80,54 @@ const initializeSocket = (server) => {
         if (activeRide?.user?.socketId) {
           sendMessageToSocketId(activeRide.user.socketId, {
             event: "captain_live_location",
-            data: { location: { latitude: location.latitude, longitude: location.longitude } },
+            data: {
+              rideId: String(activeRide._id),
+              location: { latitude: location.latitude, longitude: location.longitude },
+            },
           });
         }
       } catch (err) {
         console.error("Error updating captain location:", err.message);
         socket.emit("error", { message: "Failed to update location" });
+      }
+    });
+
+    socket.on("update_location_user", async (data) => {
+      const { userId, location } = data || {};
+      if (
+        !userId ||
+        !location ||
+        typeof location.latitude !== "number" ||
+        typeof location.longitude !== "number"
+      ) {
+        return socket.emit("error", { message: "Invalid location data" });
+      }
+
+      try {
+        // Keep the saved socket current after a browser/socket reconnection.
+        await userModel.findByIdAndUpdate(userId, { socketId: socket.id });
+
+        const activeRide = await rideModel
+          .findOne({
+            user: userId,
+            status: { $in: ["accepted", "ongoing"] },
+          })
+          .populate("captain", "socketId");
+
+        if (activeRide?.captain?.socketId) {
+          sendMessageToSocketId(activeRide.captain.socketId, {
+            event: "user_live_location",
+            data: {
+              rideId: String(activeRide._id),
+              location: {
+                latitude: location.latitude,
+                longitude: location.longitude,
+              },
+            },
+          });
+        }
+      } catch (err) {
+        console.error("Error forwarding user location:", err.message);
       }
     });
   });

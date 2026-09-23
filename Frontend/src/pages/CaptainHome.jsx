@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import CaptainDetails from "../components/CaptainDetails";
@@ -6,14 +6,19 @@ import RidePopUp from "../components/RidePopUp";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import ConfirmRidePopUp from "../components/ConfirmRidePopUp";
-import map from "../assets/map_img.png";
 import pilot from "../assets/pilot.png";
 import { SocketContext } from "../context/SocketContext";
 import { CaptainDataContext } from "../context/CaptainContext";
 
+const LazyMap = lazy(() => import("../components/Map"));
+
 const CaptainHome = () => {
   const { sendMessage, receiveMessage } = useContext(SocketContext);
   const { captain } = useContext(CaptainDataContext);
+  const [captainLocation, setCaptainLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [pickupLocation, setPickupLocation] = useState(null);
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
 
   useEffect(() => {
     const captainId = captain?._id;
@@ -29,12 +34,14 @@ const CaptainHome = () => {
     }
 
     const handlePosition = ({ coords }) => {
+      const location = {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      };
+      setCaptainLocation(location);
       sendMessage("update_location_captain", {
         userId: captainId,
-        location: {
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        },
+        location,
       });
     };
 
@@ -50,7 +57,7 @@ const CaptainHome = () => {
     const watchId = navigator.geolocation.watchPosition(
       handlePosition,
       handlePositionError,
-      { enableHighAccuracy: false, maximumAge: 30000, timeout: 20000 },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 },
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
@@ -66,6 +73,48 @@ const CaptainHome = () => {
   const confirmRidePopupPanelRef = useRef(null);
   const [ride, setRide] = useState(null);
 
+  const loadPickupAndRoute = useCallback(async (activeRide, origin) => {
+    if (!activeRide?.pickup) return;
+
+    try {
+      const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+      const pickupResponse = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/maps/captain/get-coordinates`,
+        { params: { address: activeRide.pickup }, headers },
+      );
+      const pickup = pickupResponse.data;
+      setPickupLocation(pickup);
+      setUserLocation((current) => current || pickup);
+
+      if (origin) {
+        const routeResponse = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/maps/captain/route`,
+          {
+            params: {
+              originLatitude: origin.latitude,
+              originLongitude: origin.longitude,
+              destinationLatitude: pickup.latitude,
+              destinationLongitude: pickup.longitude,
+            },
+            headers,
+          },
+        );
+        setRouteCoordinates(routeResponse.data.route);
+      }
+    } catch (error) {
+      console.error("Unable to load the pickup route:", error.response?.data || error.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (ride?.status === "accepted") {
+      const timer = window.setTimeout(() => {
+        loadPickupAndRoute(ride, captainLocation);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, [captainLocation, loadPickupAndRoute, ride]);
+
   useEffect(() => {
     return receiveMessage("newRide", (newRide) => {
       console.log("Received new ride request:", newRide);
@@ -75,8 +124,15 @@ const CaptainHome = () => {
     });
   }, [receiveMessage]);
 
+  useEffect(() => {
+    return receiveMessage("user_live_location", ({ rideId, location }) => {
+      if (rideId !== String(ride?._id)) return;
+      setUserLocation(location);
+    });
+  }, [receiveMessage, ride?._id]);
+
   async function confirmRide() {
-    await axios.post(
+    const response = await axios.post(
       `${import.meta.env.VITE_BASE_URL}/rides/confirm`,
       {
         rideId: ride._id,
@@ -90,6 +146,7 @@ const CaptainHome = () => {
       },
     );
 
+    setRide(response.data);
     setRidePopupPanel(false);
     setConfirmRidePopupPanel(true);
   }
@@ -148,7 +205,15 @@ const CaptainHome = () => {
 
       {/* Map */}
       <div className="h-3/5">
-        <img className="h-full w-full object-cover" src={map} alt="" />
+        <Suspense fallback={<div className="h-full w-full bg-gray-200" />}>
+          <LazyMap
+            liveLocation={captainLocation}
+            liveLocationLabel="Captain live location (blue)"
+            pickupLocation={userLocation || pickupLocation}
+            pickupLocationLabel="Passenger live location (green)"
+            routeCoordinates={routeCoordinates}
+          />
+        </Suspense>
       </div>
 
       {/* Captain Details */}

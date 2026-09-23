@@ -34,4 +34,31 @@ router.get(
   mapController.getAutoCompleteSuggestions,
 );
 
+router.get(
+  "/captain/get-coordinates",
+  query("address").isString().trim().isLength({ min: 3 }).notEmpty(),
+  authMiddleware.authCaptain,
+  mapController.getCoordinates,
+);
+
+router.get(
+  "/captain/route",
+  query("originLatitude").isFloat({ min: -90, max: 90 }),
+  query("originLongitude").isFloat({ min: -180, max: 180 }),
+  query("destinationLatitude").isFloat({ min: -90, max: 90 }),
+  query("destinationLongitude").isFloat({ min: -180, max: 180 }),
+  authMiddleware.authCaptain,
+  mapController.getRoute,
+);
+
+router.get(
+  "/user/route",
+  query("originLatitude").isFloat({ min: -90, max: 90 }),
+  query("originLongitude").isFloat({ min: -180, max: 180 }),
+  query("destinationLatitude").isFloat({ min: -90, max: 90 }),
+  query("destinationLongitude").isFloat({ min: -180, max: 180 }),
+  authMiddleware.authUser,
+  mapController.getRoute,
+);
+
 module.exports = router;

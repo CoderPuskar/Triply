@@ -1,15 +1,25 @@
-import { useContext, useEffect } from "react";
+import { lazy, Suspense, useContext, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import white_car from "../assets/white car.png";
-import map from "../assets/map_img.png";
 import { SocketContext } from "../context/SocketContext";
+import { UserDataContext } from "../context/UserContext";
 
+const LazyMap = lazy(() => import("../components/Map"));
 
 const Riding = () => {
   const { state } = useLocation();
   let ride = state?.ride;
   const { receiveMessage } = useContext(SocketContext);
+  const { sendMessage } = useContext(SocketContext);
+  const { user } = useContext(UserDataContext);
   const navigate = useNavigate();
+  const [userLocation, setUserLocation] = useState(null);
+  const [captainLocation, setCaptainLocation] = useState(null);
+  const [pickupLocation, setPickupLocation] = useState(null);
+  const [destinationLocation, setDestinationLocation] = useState(null);
+  const [tripRoute, setTripRoute] = useState([]);
+  const [captainRoute, setCaptainRoute] = useState([]);
 
   if (!ride) {
     try {
@@ -29,6 +39,76 @@ const Riding = () => {
   }, [navigate, receiveMessage, ride?._id]);
 
   useEffect(() => {
+    if (!user?._id || !navigator.geolocation) return undefined;
+
+    sendMessage("join", { userType: "user", userId: user._id });
+    const watchId = navigator.geolocation.watchPosition(
+      ({ coords }) => {
+        const currentLocation = { latitude: coords.latitude, longitude: coords.longitude };
+        setUserLocation(currentLocation);
+        sendMessage("update_location_user", {
+          userId: user._id,
+          location: currentLocation,
+        });
+      },
+      (error) => console.warn("Unable to share rider location:", error.message),
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 },
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [sendMessage, user?._id]);
+
+  useEffect(() => receiveMessage("captain_live_location", ({ rideId, location }) => {
+    if (rideId === String(ride?._id)) {
+      setCaptainLocation(location);
+    }
+  }), [receiveMessage, ride?._id]);
+
+  useEffect(() => {
+    if (!ride?.pickup || !ride?.destination) return;
+
+    const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+    Promise.all([
+      axios.get(`${import.meta.env.VITE_BASE_URL}/maps/get-coordinates`, {
+        params: { address: ride.pickup }, headers,
+      }),
+      axios.get(`${import.meta.env.VITE_BASE_URL}/maps/get-coordinates`, {
+        params: { address: ride.destination }, headers,
+      }),
+    ]).then(async ([pickup, destination]) => {
+      setPickupLocation(pickup.data);
+      setDestinationLocation(destination.data);
+      const { data } = await axios.get(`${import.meta.env.VITE_BASE_URL}/maps/user/route`, {
+        params: {
+          originLatitude: pickup.data.latitude,
+          originLongitude: pickup.data.longitude,
+          destinationLatitude: destination.data.latitude,
+          destinationLongitude: destination.data.longitude,
+        },
+        headers,
+      });
+      setTripRoute(data.route);
+    }).catch((error) => {
+      console.error("Unable to load trip route:", error.response?.data || error.message);
+    });
+  }, [ride?.destination, ride?.pickup]);
+
+  useEffect(() => {
+    if (!captainLocation || !userLocation || !ride?._id) return;
+
+    axios.get(`${import.meta.env.VITE_BASE_URL}/maps/user/route`, {
+      params: {
+        originLatitude: captainLocation.latitude,
+        originLongitude: captainLocation.longitude,
+        destinationLatitude: userLocation.latitude,
+        destinationLongitude: userLocation.longitude,
+      },
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    }).then(({ data }) => setCaptainRoute(data.route))
+      .catch((error) => console.error("Unable to load captain route:", error.response?.data || error.message));
+  }, [captainLocation, ride?._id, userLocation]);
+
+  useEffect(() => {
     window.scrollTo({
       top: document.documentElement.scrollHeight,
       behavior: "auto",
@@ -46,7 +126,17 @@ const Riding = () => {
       </Link>
       {/* map */}
       <div className="h-1/2">
-        <img className="h-full w-full object-cover" src={map} alt="" />
+        <Suspense fallback={<div className="h-full w-full bg-gray-200" />}>
+          <LazyMap
+            liveLocation={userLocation}
+            liveLocationLabel="Your live location (blue)"
+            captainLocation={captainLocation}
+            pickupLocation={pickupLocation}
+            destinationLocation={destinationLocation}
+            routeCoordinates={tripRoute}
+            secondaryRouteCoordinates={captainRoute}
+          />
+        </Suspense>
       </div>
       {/* details */}
       <div className="h-1/2 p-5 flex flex-col">

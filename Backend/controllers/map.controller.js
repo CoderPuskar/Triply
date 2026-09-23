@@ -50,6 +50,33 @@ async function getAddressFromCoordinates(req, res) {
   }
 }
 
+async function getRoute(req, res) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const route = await mapsService.getRouteCoordinates({
+      origin: {
+        latitude: Number(req.query.originLatitude),
+        longitude: Number(req.query.originLongitude),
+      },
+      destination: {
+        latitude: Number(req.query.destinationLatitude),
+        longitude: Number(req.query.destinationLongitude),
+      },
+    });
+
+    return res.status(200).json({ route });
+  } catch (error) {
+    console.error("Error fetching route:", error.message);
+    return res.status(error.message === "Route not found" ? 404 : 500).json({
+      error: error.message,
+    });
+  }
+}
+
 // Get road distance and estimated travel time
 async function getDistanceAndTime(req, res, next) {
   try {
@@ -109,6 +136,7 @@ async function getAutoCompleteSuggestions(req, res, next) {
 module.exports = {
   getCoordinates,
   getAddressFromCoordinates,
+  getRoute,
   getDistanceAndTime,
   getAutoCompleteSuggestions,
 };

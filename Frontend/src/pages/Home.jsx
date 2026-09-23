@@ -45,6 +45,7 @@ const Home = () => {
   const [captainLocation, setCaptainLocation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [destinationLocation, setDestinationLocation] = useState(null);
+  const [captainRoute, setCaptainRoute] = useState([]);
 
   const selectCoordinates = useCallback(
     async (location, field = activeInput) => {
@@ -120,6 +121,14 @@ const Home = () => {
   }, [sendMessage, user]);
 
   useEffect(() => {
+    if (!user?._id || !userLocation) {
+      return;
+    }
+
+    sendMessage("update_location_user", { userId: user._id, location: userLocation });
+  }, [sendMessage, user?._id, userLocation]);
+
+  useEffect(() => {
     return receiveMessage("rideStarted", (startedRide) => {
       localStorage.setItem("activeRide", JSON.stringify(startedRide));
       navigate("/riding", { state: { ride: startedRide } });
@@ -131,7 +140,10 @@ const Home = () => {
 
   useEffect(() => {
     return receiveMessage("captain_live_location", (data) => {
-      if (!["accepted", "ongoing"].includes(ride?.status)) {
+      if (
+        !["accepted", "ongoing"].includes(ride?.status) ||
+        data.rideId !== String(ride?._id)
+      ) {
         return;
       }
 
@@ -139,6 +151,21 @@ const Home = () => {
       console.log("Received captain live location:", data.location);
     });
   }, [receiveMessage, ride?.status]);
+
+  useEffect(() => {
+    if (!captainLocation || !userLocation || !ride?._id) return;
+
+    axios.get(`${import.meta.env.VITE_BASE_URL}/maps/user/route`, {
+      params: {
+        originLatitude: captainLocation.latitude,
+        originLongitude: captainLocation.longitude,
+        destinationLatitude: userLocation.latitude,
+        destinationLongitude: userLocation.longitude,
+      },
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    }).then(({ data }) => setCaptainRoute(data.route))
+      .catch((error) => console.error("Unable to load captain route:", error.response?.data || error.message));
+  }, [captainLocation, ride?._id, userLocation]);
 
   const submitHandler = (e) => {
     e.preventDefault();
@@ -353,6 +380,10 @@ const Home = () => {
         {/* <img src={map_img} alt="map" className="h-full w-full object-cover" /> */}
         <Suspense fallback={<div className="h-full w-full bg-gray-300"></div>}>
           <LazyMap
+            liveLocation={userLocation}
+            liveLocationLabel="Your live location (blue)"
+            captainLocation={captainLocation}
+            routeCoordinates={captainRoute}
             destinationLocation={destinationLocation}
             onLocationSelect={handleMapLocationSelect}
             onUserLocationChange={setUserLocation}

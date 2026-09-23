@@ -1,16 +1,88 @@
-import { useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import axios from "axios";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import map from "../assets/map_img.png";
 import pilot from "../assets/pilot.png";
 import FinishRide from "../components/FinishRide";
+import { SocketContext } from "../context/SocketContext";
+import { CaptainDataContext } from "../context/CaptainContext";
+
+const LazyMap = lazy(() => import("../components/Map"));
 
 const CaptainRiding = () => {
   const { state } = useLocation();
   const ride = state?.ride;
+  const pickupAddress = ride?.pickup;
+  const destinationAddress = ride?.destination;
+  const { sendMessage, receiveMessage } = useContext(SocketContext);
+  const { captain } = useContext(CaptainDataContext);
+  const [captainLocation, setCaptainLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [pickupLocation, setPickupLocation] = useState(null);
+  const [destinationLocation, setDestinationLocation] = useState(null);
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [finishRidePanel, setFinishRidePanel] = useState(false);
   const finishRidePanelRef = useRef(null);
+
+  useEffect(() => {
+    if (!captain?._id || !navigator.geolocation) return undefined;
+
+    sendMessage("join", { userType: "captain", userId: captain._id });
+    const watchId = navigator.geolocation.watchPosition(
+      ({ coords }) => {
+        const location = { latitude: coords.latitude, longitude: coords.longitude };
+        setCaptainLocation(location);
+        sendMessage("update_location_captain", { userId: captain._id, location });
+      },
+      (error) => console.warn("Unable to share captain location:", error.message),
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 },
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [captain?._id, sendMessage]);
+
+  useEffect(() => receiveMessage("user_live_location", ({ rideId, location }) => {
+    if (rideId !== String(ride?._id)) return;
+    setUserLocation(location);
+  }), [receiveMessage, ride?._id]);
+
+  const loadRideLocations = useCallback(async () => {
+    if (!pickupAddress || !destinationAddress) return;
+    const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+    try {
+      const [pickup, destination] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_BASE_URL}/maps/captain/get-coordinates`, { params: { address: pickupAddress }, headers }),
+        axios.get(`${import.meta.env.VITE_BASE_URL}/maps/captain/get-coordinates`, { params: { address: destinationAddress }, headers }),
+      ]);
+      setPickupLocation(pickup.data);
+      setDestinationLocation(destination.data);
+      setUserLocation((current) => current || pickup.data);
+    } catch (error) {
+      console.error("Unable to load ride locations:", error.response?.data || error.message);
+    }
+  }, [destinationAddress, pickupAddress]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(loadRideLocations, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadRideLocations]);
+
+  useEffect(() => {
+    const routeDestination = destinationLocation;
+    if (!captainLocation || !routeDestination) return;
+    const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+    axios.get(`${import.meta.env.VITE_BASE_URL}/maps/captain/route`, {
+      params: {
+        originLatitude: captainLocation.latitude,
+        originLongitude: captainLocation.longitude,
+        destinationLatitude: routeDestination.latitude,
+        destinationLongitude: routeDestination.longitude,
+      },
+      headers,
+    }).then(({ data }) => setRouteCoordinates(data.route))
+      .catch((error) => console.error("Unable to load destination route:", error.response?.data || error.message));
+  }, [captainLocation, destinationLocation]);
 
   useGSAP(
     function () {
@@ -52,7 +124,16 @@ const CaptainRiding = () => {
 
       {/* Map */}
       <div className="h-4/5">
-        <img className="h-full w-full object-cover" src={map} alt="" />
+        <Suspense fallback={<div className="h-full w-full bg-gray-200" />}>
+          <LazyMap
+            liveLocation={captainLocation}
+            liveLocationLabel="Captain live location (blue)"
+            pickupLocation={userLocation || pickupLocation}
+            pickupLocationLabel="Passenger live location (green)"
+            destinationLocation={destinationLocation}
+            routeCoordinates={routeCoordinates}
+          />
+        </Suspense>
       </div>
 
       {/* button panel */}

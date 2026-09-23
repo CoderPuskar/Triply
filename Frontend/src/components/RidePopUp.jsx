@@ -71,9 +71,9 @@ const RidePopUp = (props) => {
         <div className="mt-5 w-full flex items-center justify-between ">
           {/* accept Button */}
           <button
-            onClick={() => {
+            onClick={async () => {
+              await props.confirmRide();
               props.setConfirmRidePopupPanel(true);
-              props.confirmRide();
             }}
             className=" bg-green-600 text-white font-semibold p-3 px-10 rounded-lg"
           >
