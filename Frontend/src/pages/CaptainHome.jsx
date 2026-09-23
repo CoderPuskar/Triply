@@ -240,7 +240,7 @@ const CaptainHome = () => {
       <div
         ref={confirmRidePopupPanelRef}
         aria-hidden={!confirmRidePopupPanel}
-        className={`fixed inset-x-0 bottom-0 z-40 h-[100dvh] overflow-y-auto overscroll-contain bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-12 sm:px-6 ${confirmRidePopupPanel ? "visible" : "invisible pointer-events-none"}`}
+        className={`fixed inset-x-0 bottom-0 z-40 h-dvh overflow-y-auto overscroll-contain bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-12 sm:px-6 ${confirmRidePopupPanel ? "visible" : "invisible pointer-events-none"}`}
       >
         <ConfirmRidePopUp
           ride={ride}
