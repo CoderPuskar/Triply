@@ -41,6 +41,8 @@ const Home = () => {
 
   const { sendMessage, receiveMessage } = useContext(SocketContext);
   const { user } = useContext(UserDataContext);
+  const ridePanelOpen =
+    vehiclePanelOpen || confirmRidePanel || vehicleFound || waitingForDriver;
 
   const [captainLocation, setCaptainLocation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -137,6 +139,8 @@ const Home = () => {
       localStorage.setItem("activeRide", JSON.stringify(startedRide));
       navigate("/riding", { state: { ride: startedRide } });
       setRide(startedRide);
+      setVehiclePanelOpen(false);
+      setconfirmRidePanel(false);
       setvehicleFound(false);
       setWaitingForDriver(true);
     });
@@ -178,6 +182,8 @@ const Home = () => {
   useEffect(() => {
     return receiveMessage("rideConfirmed", (confirmedRide) => {
       setRide(confirmedRide);
+      setVehiclePanelOpen(false);
+      setconfirmRidePanel(false);
       setvehicleFound(false);
       setWaitingForDriver(true);
       console.log("Ride accepted:", {
@@ -317,6 +323,9 @@ const Home = () => {
       return;
     }
     setVehiclePanelOpen(true);
+    setconfirmRidePanel(false);
+    setvehicleFound(false);
+    setWaitingForDriver(false);
     setPanelOpen(false);
     setTripRoute([]);
 
@@ -436,8 +445,11 @@ const Home = () => {
       </div>
 
       {/* Find a trip form */}
-      <div className="pointer-events-none absolute inset-0 flex flex-col justify-end">
-        <div className="pointer-events-auto relative h-[40%] rounded-t-3xl bg-white p-10">
+      <div
+        aria-hidden={ridePanelOpen}
+        className={`pointer-events-none absolute inset-0 flex flex-col justify-end ${ridePanelOpen ? "invisible" : "visible"}`}
+      >
+        <div className="pointer-events-auto relative max-h-[55dvh] overflow-y-auto overscroll-contain rounded-t-3xl bg-white p-5 sm:p-10">
           {/*down Arrow */}
           <h1
             onClick={() => {
@@ -509,7 +521,11 @@ const Home = () => {
         </div>
 
         {/* Bottom panel */}
-        <div ref={panelRef} className="pointer-events-auto h-screen bg-white">
+        <div
+          ref={panelRef}
+          aria-hidden={!panelOpen}
+          className={`pointer-events-auto h-screen bg-white ${panelOpen ? "visible" : "invisible pointer-events-none"}`}
+        >
           {/* vehicle panel search sugestions  */}
           <LocationSearchPanel
             setPanelOpen={setPanelOpen}
@@ -538,7 +554,8 @@ const Home = () => {
 
       <div
         ref={confirmRidePanelRef}
-        className="fixed bottom-0 left-0 right-0 z-20 w-full translate-y-full bg-white"
+        aria-hidden={!confirmRidePanel}
+        className={`fixed bottom-0 left-0 right-0 z-30 max-h-[92dvh] w-full overflow-y-auto overscroll-contain bg-white pb-[env(safe-area-inset-bottom)] ${confirmRidePanel ? "visible" : "invisible pointer-events-none"}`}
       >
         <ConfirmRide
           setConfirmRidePanel={setconfirmRidePanel}
@@ -554,7 +571,8 @@ const Home = () => {
 
       <div
         ref={vehicleFoundRef}
-        className="fixed bottom-0 left-0 right-0 z-20 w-full translate-y-full bg-white h-[70vh] overflow-y-auto rounded-t-3xl"
+        aria-hidden={!vehicleFound}
+        className={`fixed bottom-0 left-0 right-0 z-40 max-h-[88dvh] w-full overflow-y-auto overscroll-contain rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] ${vehicleFound ? "visible" : "invisible pointer-events-none"}`}
       >
         <LookingForDriver
           ride={ride}
@@ -569,7 +587,8 @@ const Home = () => {
 
       <div
         ref={waitingForDriverRef}
-        className="fixed bottom-0 left-0 right-0 z-20 w-full translate-y-full overflow-hidden rounded-t-3xl"
+        aria-hidden={!waitingForDriver}
+        className={`fixed bottom-0 left-0 right-0 z-50 max-h-[88dvh] w-full overflow-y-auto overscroll-contain rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] ${waitingForDriver ? "visible" : "invisible pointer-events-none"}`}
       >
         <WaitingForDriver
           ride={ride}

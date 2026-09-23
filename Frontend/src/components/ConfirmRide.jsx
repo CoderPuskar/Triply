@@ -79,6 +79,7 @@ const ConfirmRide = (props) => {
 
             if (!ride) return;
 
+            props.setVehiclePanelOpen(false);
             props.setvehicleFound(true);
             props.setConfirmRidePanel(false);
           }}

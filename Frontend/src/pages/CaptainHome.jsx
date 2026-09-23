@@ -210,7 +210,7 @@ const CaptainHome = () => {
             liveLocation={captainLocation}
             liveLocationLabel="Captain live location (blue)"
             pickupLocation={userLocation || pickupLocation}
-            pickupLocationLabel="Passenger live location (green)"
+            pickupLocationLabel={userLocation ?  "Pickup address (green)" : "Pickup location (green)"}
             routeCoordinates={routeCoordinates}
           />
         </Suspense>
@@ -226,7 +226,8 @@ const CaptainHome = () => {
       {/* Ride Popup */}
       <div
         ref={ridePopupPanelRef}
-        className="fixed inset-x-0 bottom-0 z-30 max-h-[88dvh] translate-y-full overflow-y-auto overscroll-contain rounded-t-3xl bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-10 shadow-2xl sm:px-6"
+        aria-hidden={!ridePopupPanel}
+        className={`fixed inset-x-0 bottom-0 z-30 max-h-[88dvh] overflow-y-auto overscroll-contain rounded-t-3xl bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-10 shadow-2xl sm:px-6 ${ridePopupPanel ? "visible" : "invisible pointer-events-none"}`}
       >
         {/* Ride Popup */}
         <RidePopUp
@@ -238,7 +239,8 @@ const CaptainHome = () => {
       </div>
       <div
         ref={confirmRidePopupPanelRef}
-        className="fixed inset-x-0 bottom-0 z-40 h-[100dvh] translate-y-full overflow-y-auto overscroll-contain bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-12 sm:px-6"
+        aria-hidden={!confirmRidePopupPanel}
+        className={`fixed inset-x-0 bottom-0 z-40 h-[100dvh] overflow-y-auto overscroll-contain bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-12 sm:px-6 ${confirmRidePopupPanel ? "visible" : "invisible pointer-events-none"}`}
       >
         <ConfirmRidePopUp
           ride={ride}

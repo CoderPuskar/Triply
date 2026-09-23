@@ -17,7 +17,8 @@ const VehiclePanel = ({
     <div>
       <div
         ref={vehiclePanelRef}
-        className={`fixed bottom-0 left-0 right-0 z-10 w-full bg-white transition-transform duration-500 ${vehiclePanelOpen ? "translate-y-0" : "translate-y-full"}`}
+        aria-hidden={!vehiclePanelOpen}
+        className={`fixed bottom-0 left-0 right-0 z-20 max-h-[88dvh] w-full overflow-y-auto overscroll-contain bg-white pb-[env(safe-area-inset-bottom)] transition-transform duration-500 ${vehiclePanelOpen ? "visible translate-y-0" : "invisible pointer-events-none translate-y-full"}`}
       >
         <h1
           className="flex justify-center items-center text-gray-400 text-3xl mx-auto p-5 w-[50%] "
@@ -35,6 +36,7 @@ const VehiclePanel = ({
           <div
             onClick={() => {
               setSelectedVehicle("car");
+              setVehiclePanelOpen(false);
               setConfirmRidePanel(true);
             }}
             className={`grid bg-gray-100 w-full grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border-2 pr-2 ${selectedVehicle === "car" ? "border-black" : "border-gray-200"}`}
@@ -72,6 +74,7 @@ const VehiclePanel = ({
           <div
             onClick={() => {
               setSelectedVehicle("moto");
+              setVehiclePanelOpen(false);
               setConfirmRidePanel(true);
             }}
             className={`grid  bg-gray-100  w-full grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border-2 pr-2 ${selectedVehicle === "moto" ? "border-black" : "border-gray-200"}`}
@@ -109,6 +112,7 @@ const VehiclePanel = ({
           <div
             onClick={() => {
               setSelectedVehicle("auto");
+              setVehiclePanelOpen(false);
               setConfirmRidePanel(true);
             }}
             className={`grid  bg-gray-100  w-full grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border-2 pr-2 ${selectedVehicle === "auto" ? "border-black" : "border-gray-200"}`}

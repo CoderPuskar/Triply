@@ -129,7 +129,7 @@ const CaptainRiding = () => {
             liveLocation={captainLocation}
             liveLocationLabel="Captain live location (blue)"
             pickupLocation={userLocation || pickupLocation}
-            pickupLocationLabel="Passenger live location (green)"
+            pickupLocationLabel={userLocation ? "Passenger live location (green)" : "Pickup address (green)"}
             destinationLocation={destinationLocation}
             routeCoordinates={routeCoordinates}
           />
@@ -166,7 +166,8 @@ const CaptainRiding = () => {
       </div>
       <div
         ref={finishRidePanelRef}
-        className="fixed inset-x-0 bottom-0 z-30 max-h-[92dvh] translate-y-full overflow-y-auto overscroll-contain rounded-t-3xl bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-12 shadow-2xl sm:px-6"
+        aria-hidden={!finishRidePanel}
+        className={`fixed inset-x-0 bottom-0 z-30 max-h-[92dvh] overflow-y-auto overscroll-contain rounded-t-3xl bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-12 shadow-2xl sm:px-6 ${finishRidePanel ? "visible" : "invisible pointer-events-none"}`}
       >
         <FinishRide ride={ride} setFinishRidePanel={setFinishRidePanel} />
       </div>
