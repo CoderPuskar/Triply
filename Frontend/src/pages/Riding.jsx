@@ -52,7 +52,7 @@ const Riding = () => {
         });
       },
       (error) => console.warn("Unable to share rider location:", error.message),
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 },
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 30_000 },
     );
 
     return () => navigator.geolocation.clearWatch(watchId);

@@ -28,6 +28,20 @@ const FollowUser = ({ position }) => {
   return null;
 };
 
+const FitRoute = ({ coordinates }) => {
+  const map = useMap();
+  const hasFitRoute = useRef(false);
+
+  useEffect(() => {
+    if (coordinates?.length > 1 && !hasFitRoute.current) {
+      map.fitBounds(coordinates, { padding: [40, 40], maxZoom: 16 });
+      hasFitRoute.current = true;
+    }
+  }, [coordinates, map]);
+
+  return null;
+};
+
 const MapClickHandler = ({ onLocationSelect }) => {
   useMapEvents({
     click: ({ latlng }) => {
@@ -74,9 +88,10 @@ const Map = ({
         console.warn("Unable to get the user's live location:", error.message);
       },
       {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 20_000,
+        // Avoid requiring a fresh GPS fix, which is often unavailable on desktops.
+        enableHighAccuracy: false,
+        maximumAge: 60_000,
+        timeout: 30_000,
       },
     );
 
@@ -105,6 +120,7 @@ const Map = ({
       />
 
       <FollowUser position={displayedLiveLocation} />
+      <FitRoute coordinates={routeCoordinates} />
       <MapClickHandler onLocationSelect={handleMapClick} />
 
       {displayedLiveLocation && (

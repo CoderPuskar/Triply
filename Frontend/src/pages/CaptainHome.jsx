@@ -57,7 +57,7 @@ const CaptainHome = () => {
     const watchId = navigator.geolocation.watchPosition(
       handlePosition,
       handlePositionError,
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 },
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 30_000 },
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
@@ -182,8 +182,8 @@ const CaptainHome = () => {
   );
 
   return (
-    <div className="h-screen">
-      <div className="fixed p-6  top-0 flex items-center justify-between w-screen">
+    <div className="relative isolate h-dvh min-h-dvh overflow-hidden bg-gray-100">
+      <div className="fixed inset-x-0 top-0 z-20 flex items-center justify-between p-4 sm:p-6">
         {/* Logo and Title */}
         <div className="max-w-full mt-0 flex items-center">
           <div className="flex flex-col items-center">
@@ -191,7 +191,7 @@ const CaptainHome = () => {
             <h1 className="text-black text-sm -translate-3 pl-5">Pilot</h1>
           </div>
 
-          <h1 className="Home-heading text-black text-4xl font-poppins font-medium ml-2 ">
+          <h1 className="Home-heading ml-2 text-2xl font-medium text-black sm:text-4xl">
             Triply
           </h1>
         </div>
@@ -204,7 +204,7 @@ const CaptainHome = () => {
       </div>
 
       {/* Map */}
-      <div className="h-3/5">
+      <div className="absolute inset-0 z-0">
         <Suspense fallback={<div className="h-full w-full bg-gray-200" />}>
           <LazyMap
             liveLocation={captainLocation}
@@ -217,14 +217,16 @@ const CaptainHome = () => {
       </div>
 
       {/* Captain Details */}
-      <div className="h-2/5 p-6">
-        <CaptainDetails />
+      <div className={`fixed inset-x-0 bottom-0 z-10 px-4 pb-4 transition-opacity sm:px-6 ${ridePopupPanel || confirmRidePopupPanel ? "pointer-events-none opacity-0" : "opacity-100"}`}>
+        <div className="mx-auto max-w-2xl rounded-t-3xl bg-white/95 p-4 shadow-xl backdrop-blur sm:p-6">
+          <CaptainDetails />
+        </div>
       </div>
 
       {/* Ride Popup */}
       <div
         ref={ridePopupPanelRef}
-        className="fixed w-full z-10 bottom-0 translate-y-full bg-white px-3 py-10 pt-12"
+        className="fixed inset-x-0 bottom-0 z-30 max-h-[88dvh] translate-y-full overflow-y-auto overscroll-contain rounded-t-3xl bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-10 shadow-2xl sm:px-6"
       >
         {/* Ride Popup */}
         <RidePopUp
@@ -236,7 +238,7 @@ const CaptainHome = () => {
       </div>
       <div
         ref={confirmRidePopupPanelRef}
-        className="fixed w-full h-screen z-10 bottom-0 translate-y-full bg-white px-3 py-10 pt-12"
+        className="fixed inset-x-0 bottom-0 z-40 h-[100dvh] translate-y-full overflow-y-auto overscroll-contain bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-12 sm:px-6"
       >
         <ConfirmRidePopUp
           ride={ride}

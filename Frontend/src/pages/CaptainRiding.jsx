@@ -36,7 +36,7 @@ const CaptainRiding = () => {
         sendMessage("update_location_captain", { userId: captain._id, location });
       },
       (error) => console.warn("Unable to share captain location:", error.message),
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 },
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 30_000 },
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
@@ -100,8 +100,8 @@ const CaptainRiding = () => {
   );
 
   return (
-    <div className="h-screen">
-      <div className="fixed p-6  top-0 flex items-center justify-between w-screen">
+    <div className="relative isolate h-dvh min-h-dvh overflow-hidden bg-gray-100">
+      <div className="fixed inset-x-0 top-0 z-20 flex items-center justify-between p-4 sm:p-6">
         {/* Logo and Title */}
         <div className="max-w-full mt-0 flex items-center">
           <div className="flex flex-col items-center">
@@ -109,7 +109,7 @@ const CaptainRiding = () => {
             <h1 className="text-black text-sm -translate-3 pl-5">Pilot</h1>
           </div>
 
-          <h1 className="Home-heading text-black text-4xl font-poppins font-medium ml-2 ">
+          <h1 className="Home-heading ml-2 text-2xl font-medium text-black sm:text-4xl">
             Triply
           </h1>
         </div>
@@ -123,7 +123,7 @@ const CaptainRiding = () => {
       </div>
 
       {/* Map */}
-      <div className="h-4/5">
+      <div className="absolute inset-0 z-0">
         <Suspense fallback={<div className="h-full w-full bg-gray-200" />}>
           <LazyMap
             liveLocation={captainLocation}
@@ -138,19 +138,19 @@ const CaptainRiding = () => {
 
       {/* button panel */}
       <div
-        className="h-1/5 p-6 bg-yellow-400 flex items-center justify-between relative"
+        className="fixed inset-x-0 bottom-0 z-10 flex min-h-28 items-center justify-between gap-3 bg-yellow-400 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6"
         onClick={() => {
           setFinishRidePanel(true);
         }}
       >
         <h5 className=" text-center w-full left-0 flex top-0 absolute justify-center items-center p-2 rounded-lg text-black font-semibold">
-          <i className="text-3xl ri-arrow-up-wide-line "></i>
+          <i className="text-2xl ri-arrow-up-wide-line sm:text-3xl"></i>
         </h5>
         <div>
-          <h4 className="text-xl font-semibold">
+          <h4 className="text-base font-semibold sm:text-xl">
             {ride?.distance ? `${ride.distance} KM away` : "Ride in progress"}
           </h4>
-          <p className="text-sm text-gray-700 capitalize">
+          <p className="max-w-[45vw] truncate text-xs text-gray-700 capitalize sm:text-sm">
             {ride?.user?.fullname
               ? `${ride.user.fullname.firstname} ${ride.user.fullname.lastname || ""}`
               : "Passenger"}
@@ -158,7 +158,7 @@ const CaptainRiding = () => {
         </div>
         <button
           type="button"
-          className="bg-green-600 rounded-lg text-white font-semibold px-10 p-3"
+          className="shrink-0 rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white sm:px-10 sm:text-base"
           onClick={() => setFinishRidePanel(true)}
         >
           Complete Ride
@@ -166,7 +166,7 @@ const CaptainRiding = () => {
       </div>
       <div
         ref={finishRidePanelRef}
-        className="fixed w-full z-10 bottom-0 translate-y-full bg-white pt-12"
+        className="fixed inset-x-0 bottom-0 z-30 max-h-[92dvh] translate-y-full overflow-y-auto overscroll-contain rounded-t-3xl bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-12 shadow-2xl sm:px-6"
       >
         <FinishRide ride={ride} setFinishRidePanel={setFinishRidePanel} />
       </div>

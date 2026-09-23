@@ -46,6 +46,8 @@ const Home = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [destinationLocation, setDestinationLocation] = useState(null);
   const [captainRoute, setCaptainRoute] = useState([]);
+  const [tripRoute, setTripRoute] = useState([]);
+  const [tripPickupLocation, setTripPickupLocation] = useState(null);
 
   const selectCoordinates = useCallback(
     async (location, field = activeInput) => {
@@ -108,7 +110,9 @@ const Home = () => {
           "pickup",
         ),
       (error) => console.warn("Unable to get your location:", error.message),
-      { enableHighAccuracy: true, timeout: 20_000 },
+      // Prefer the browser's network-based location provider; high-accuracy GPS
+      // often times out on desktops and browser emulators.
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 30_000 },
     );
   };
 
@@ -314,6 +318,47 @@ const Home = () => {
     }
     setVehiclePanelOpen(true);
     setPanelOpen(false);
+    setTripRoute([]);
+
+    const headers = {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    };
+
+    // Resolve the typed addresses and draw the route before showing the ride options.
+    try {
+      const [pickupResponse, destinationResponse] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_BASE_URL}/maps/get-coordinates`, {
+          params: { address: pickup },
+          headers,
+        }),
+        axios.get(`${import.meta.env.VITE_BASE_URL}/maps/get-coordinates`, {
+          params: { address: destination },
+          headers,
+        }),
+      ]);
+      const pickupCoordinates = pickupResponse.data;
+      const destinationCoordinates = destinationResponse.data;
+
+      setTripPickupLocation(pickupCoordinates);
+      setDestinationLocation(destinationCoordinates);
+
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/maps/user/route`,
+        {
+          params: {
+            originLatitude: pickupCoordinates.latitude,
+            originLongitude: pickupCoordinates.longitude,
+            destinationLatitude: destinationCoordinates.latitude,
+            destinationLongitude: destinationCoordinates.longitude,
+          },
+          headers,
+        },
+      );
+      setTripRoute(data.route);
+    } catch (error) {
+      console.error("Unable to preview trip route:", error.response?.data || error.message);
+    }
+
     // Fetch fare from the backend
     setFareLoading(true);
     try {
@@ -324,9 +369,7 @@ const Home = () => {
             pickup,
             destination,
           },
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          headers,
         },
       );
 
@@ -383,7 +426,8 @@ const Home = () => {
             liveLocation={userLocation}
             liveLocationLabel="Your live location (blue)"
             captainLocation={captainLocation}
-            routeCoordinates={captainRoute}
+            routeCoordinates={tripRoute.length ? tripRoute : captainRoute}
+            pickupLocation={tripPickupLocation}
             destinationLocation={destinationLocation}
             onLocationSelect={handleMapLocationSelect}
             onUserLocationChange={setUserLocation}
