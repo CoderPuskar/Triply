@@ -514,7 +514,7 @@ const Home = () => {
             onClick={() => {
               find_a_trip();
             }}
-            className="mt-5 w-full rounded-xl bg-black px-6 py-3 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-xl active:translate-y-0"
+            className="mt-8 mb-15 w-full rounded-xl bg-black px-6 py-3 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-xl active:translate-y-0"
           >
             Find a trip
           </button>

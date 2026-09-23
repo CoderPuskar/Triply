@@ -161,6 +161,13 @@ module.exports.endRide = async (req, res) => {
       });
     }
 
+    if (ride.captain?.socketId) {
+      sendMessageToSocketId(ride.captain.socketId, {
+        event: "dailyStatsUpdated",
+        data: { captainId: String(ride.captain._id) },
+      });
+    }
+
     return res.status(200).json(ride);
   } catch (err) {
     return res.status(400).json({ message: err.message });

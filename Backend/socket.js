@@ -2,6 +2,8 @@ let io;
 const userModel = require("./models/user.model");
 const captainModel = require("./models/captain.models");
 const rideModel = require("./models/ride.models");
+const { getIndiaDateKey } = require("./utils/day");
+const { finishOnlineSession } = require("./services/captain-presence.service");
 
 const initializeSocket = (server) => {
   const { Server } = require("socket.io");
@@ -29,7 +31,17 @@ const initializeSocket = (server) => {
         if (userType === "user") {
           await userModel.findByIdAndUpdate(userId, { socketId: socket.id });
         } else if (userType === "captain") {
-          await captainModel.findByIdAndUpdate(userId, { socketId: socket.id });
+          const captain = await captainModel.findById(userId);
+          if (captain) {
+            const today = getIndiaDateKey();
+            if (captain.onlineStatsDate !== today) {
+              captain.onlineStatsDate = today;
+              captain.onlineSecondsToday = 0;
+            }
+            captain.socketId = socket.id;
+            captain.onlineSince = captain.onlineSince || new Date();
+            await captain.save();
+          }
         }
 
         console.log(
@@ -40,8 +52,16 @@ const initializeSocket = (server) => {
       }
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
       console.log("Socket disconnected:", socket.id);
+      try {
+        const captain = await captainModel.findOne({ socketId: socket.id });
+        if (!captain) return;
+
+        await finishOnlineSession(captain);
+      } catch (error) {
+        console.error("Unable to close captain online session:", error.message);
+      }
     });
 
     socket.on("update_location_captain", async (data) => {

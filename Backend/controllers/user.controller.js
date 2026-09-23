@@ -4,53 +4,76 @@ const userService = require("../services/user.service");
 const { validationResult } = require("express-validator");
 const blackListTokenModel = require("../models/blacklistToken.model");
 
-module.exports.registerUser = async (req, res, next) => {
+module.exports.registerUser = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    console.log("Request body:", req.body); // Log the request body for debugging
-
     const { fullname, email, password } = req.body;
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingUser = await userModel.exists({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(409).json({
+        message: "A user account with this email already exists.",
+      });
+    }
     const hashedPassword = await userModel.hashPassword(password);
 
     const user = await userService.createUser({
       firstname: fullname.firstname,
       lastname: fullname.lastname,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
     });
     const token = user.generateAuthToken();
     res.status(201).json({ user, token });
   } catch (error) {
-    next(error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "A user account with this email already exists.",
+      });
+    }
+    console.error("User registration failed:", error);
+    return res.status(500).json({
+      message: "Unable to create your account right now. Please try again.",
+    });
   }
 };
 
-module.exports.loginUser = async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+module.exports.loginUser = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, password } = req.body;
+
+    const user = await userModel
+      .findOne({ email: email.trim().toLowerCase() })
+      .select("+password");
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const isMatch = await user.comparePassword(password);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const token = user.generateAuthToken();
+    res.cookie("token", token);
+    user.password = undefined;
+    return res.status(200).json({ user, token });
+  } catch (error) {
+    console.error("User login failed:", error);
+    return res.status(500).json({
+      message: "Unable to log in right now. Please try again.",
+    });
   }
-
-  const { email, password } = req.body;
-
-  const user = await userModel.findOne({ email }).select("+password"); //when i use find one then password is not selected by default, because in the user model we have set select:false for password field ,so we need to use select("+password") to get the password field from the database.
-
-  if (!user) {
-    return res.status(401).json({ message: "Invalid email or password" });
-  }
-
-  const isMatch = await user.comparePassword(password); //this comparepassword method is defined in the user model, it compares the password entered by the user with the hashed password stored in the database.
-
-  if (!isMatch) {
-    return res.status(401).json({ message: "Invalid email or password" });
-  }
-
-  const token = user.generateAuthToken();
-  res.cookie("token", token); // Set the token in a cookie
-  res.status(200).json({ user, token });
 };
 module.exports.getUserProfile = async (req, res, next) => {
   return res.status(200).json({ user: req.user });

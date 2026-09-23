@@ -232,7 +232,8 @@ module.exports.endRide = async ({ rideId, captainId }) => {
     },
     {
       $set: {
-        status: "completed"
+        status: "completed",
+        completedAt: new Date(),
       },
       $unset: {
         otp: ""
@@ -254,7 +255,7 @@ module.exports.endRide = async ({ rideId, captainId }) => {
     },
     {
       path: "captain",
-      select: "fullname vehicle"
+      select: "fullname vehicle socketId"
     }
   ]);
 

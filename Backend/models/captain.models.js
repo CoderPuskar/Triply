@@ -86,6 +86,18 @@ const captainSchema = new mongoose.Schema({
   socketId: {
     type: String,
   },
+  onlineSince: {
+    type: Date,
+    default: null,
+  },
+  onlineStatsDate: {
+    type: String,
+    default: "",
+  },
+  onlineSecondsToday: {
+    type: Number,
+    default: 0,
+  },
 });
 
 

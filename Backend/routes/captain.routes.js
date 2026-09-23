@@ -46,6 +46,12 @@ router.post(
 );
 
 router.get(
+  "/daily-stats",
+  authMiddleware.authCaptain,
+  captainController.getDailyStats,
+);
+
+router.get(
   "/profile",
   authMiddleware.authCaptain,
   captainController.getCaptainProfile,

@@ -41,10 +41,13 @@ const rideSchema = new mongoose.Schema({
   signature: {
     type: String,
   },
+  completedAt: {
+    type: Date,
+  },
   otp: {
     type: String,
     select: false,
   },
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("Ride", rideSchema);

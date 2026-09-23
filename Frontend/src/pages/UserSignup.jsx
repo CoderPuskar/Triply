@@ -1,4 +1,4 @@
-import React, { use, useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { UserDataContext } from "../context/UserContext";
@@ -10,8 +10,7 @@ const UserSignup = () => {
   const [lastname, setLastname] = useState("");
   const [showTerms, setShowTerms] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
-
-  const [userData, setUserdata] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const navigate = useNavigate();
 
@@ -19,6 +18,7 @@ const UserSignup = () => {
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
     // store data
     const newUser = {
       fullname: {
@@ -30,25 +30,23 @@ const UserSignup = () => {
     };
     // Axios is used to communicate between your React frontend and backend server.
     // axios.post(URL, DATA)
-    const response = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/users/register`,
-      newUser,
-    );
-
-    if (response.status === 201) {
-      //positive response
-      const data = response.data; //backend response like user registered siccessfully
-      setUser(data.user); //stores the newly registered user in your global context.
-      navigate("/home"); //navigate to home page
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/users/register`,
+        newUser,
+      );
+      const data = response.data;
+      setUser(data.user);
+      localStorage.setItem("token", data.token);
+      navigate("/home");
+    } catch (error) {
+      console.error("User signup failed:", error.response?.data || error.message);
+      setErrorMessage(
+        error.response?.data?.message ||
+          error.response?.data?.errors?.[0]?.msg ||
+          "Unable to create your account. Check your details and try again.",
+      );
     }
-
-    console.log(userData);
-    setEmail("");
-    setFirstname("");
-    setLastname("");
-    setPassword("");
-    setShowTerms(false);
-    setTermsAccepted(false);
   };
 
   return (
@@ -75,6 +73,7 @@ const UserSignup = () => {
               placeholder="First name"
               value={firstname}
               onChange={(e) => {
+                setErrorMessage("");
                 setFirstname(e.target.value);
               }}
               className="bg-[#f3f3f3] rounded w-1/2 px-4 py-2 text-base placeholder:text-base mb-5"
@@ -85,6 +84,7 @@ const UserSignup = () => {
               placeholder="Last name"
               value={lastname}
               onChange={(e) => {
+                setErrorMessage("");
                 setLastname(e.target.value);
               }}
               className="bg-[#f3f3f3] rounded w-1/2 px-4 py-2 text-base placeholder:text-base mb-5"
@@ -99,6 +99,7 @@ const UserSignup = () => {
             placeholder="email@gmail.com"
             value={email}
             onChange={(e) => {
+              setErrorMessage("");
               setEmail(e.target.value);
             }}
             className="bg-[#f3f3f3] rounded w-full px-4 py-2 text-base placeholder:text-base mb-5"
@@ -113,6 +114,7 @@ const UserSignup = () => {
             placeholder="Password"
             value={password}
             onChange={(e) => {
+              setErrorMessage("");
               setPassword(e.target.value);
             }}
             className="bg-[#f3f3f3] rounded w-full px-4 py-2 text-base placeholder:text-base mb-7"
@@ -149,6 +151,11 @@ const UserSignup = () => {
           </div>
 
           {/* Sign up button */}
+          {errorMessage && (
+            <p role="alert" className="text-red-500 text-sm mt-4">
+              {errorMessage}
+            </p>
+          )}
           <div className="pt-50">
             <button
               type="submit"

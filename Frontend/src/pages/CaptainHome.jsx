@@ -19,6 +19,35 @@ const CaptainHome = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [pickupLocation, setPickupLocation] = useState(null);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [dailyStats, setDailyStats] = useState(null);
+
+  const refreshDailyStats = useCallback(async () => {
+    if (!captain?._id) return;
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/captains/daily-stats`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        },
+      );
+      setDailyStats(response.data);
+    } catch (error) {
+      console.error("Unable to load captain daily stats:", error.response?.data || error.message);
+    }
+  }, [captain?._id]);
+
+  useEffect(() => {
+    refreshDailyStats();
+    const interval = window.setInterval(refreshDailyStats, 15_000);
+    return () => window.clearInterval(interval);
+  }, [refreshDailyStats]);
+
+  useEffect(
+    () => receiveMessage("dailyStatsUpdated", ({ captainId } = {}) => {
+      if (captainId === String(captain?._id)) refreshDailyStats();
+    }),
+    [captain?._id, receiveMessage, refreshDailyStats],
+  );
 
   useEffect(() => {
     const captainId = captain?._id;
@@ -196,7 +225,7 @@ const CaptainHome = () => {
           </h1>
         </div>
         <Link
-          to="/captain-home"
+          to="/captain-logout"
           className=" h-10 w-10 bg-white flex items-center justify-center rounded-full"
         >
           <i className="text-lg font-medium ri-logout-box-r-line "></i>
@@ -219,7 +248,7 @@ const CaptainHome = () => {
       {/* Captain Details */}
       <div className={`fixed inset-x-0 bottom-0 z-10 px-4 pb-4 transition-opacity sm:px-6 ${ridePopupPanel || confirmRidePopupPanel ? "pointer-events-none opacity-0" : "opacity-100"}`}>
         <div className="mx-auto max-w-2xl rounded-t-3xl bg-white/95 p-4 shadow-xl backdrop-blur sm:p-6">
-          <CaptainDetails />
+          <CaptainDetails stats={dailyStats} />
         </div>
       </div>
 
