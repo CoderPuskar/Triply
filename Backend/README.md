@@ -1138,3 +1138,67 @@ Authorization: Bearer <jwt_token>
 - [services/maps.service.js](services/maps.service.js)
 - [services/ride.service.js](services/ride.service.js)
 - [models/blacklistToken.model.js](models/blacklistToken.model.js)
+
+---
+
+## Additional implemented features
+
+The endpoint descriptions above cover the account, map, and ride foundations. The current application also implements the following workflows and endpoints.
+
+### Captain operations
+
+| Method | Endpoint | Authentication | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/captains/daily-stats` | Captain | Return the current captain's daily activity summary. |
+
+Captain registration includes vehicle color, number plate, capacity, and `vehicalType` (`car`, `bike`, `van`, or `auto`). Online presence is tracked when a captain joins Socket.IO. The backend records the online session and closes it when that captain disconnects.
+
+### Additional map operations
+
+| Method | Endpoint | Authentication | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/maps/reverse-geocode?latitude=<lat>&longitude=<lng>` | Rider | Convert a map coordinate to a readable address. |
+| `GET` | `/maps/user/route?...coordinates` | Rider | Return route coordinates for rider map displays. |
+| `GET` | `/maps/captain/get-coordinates?address=<address>` | Captain | Geocode an address for captain screens. |
+| `GET` | `/maps/captain/route?...coordinates` | Captain | Return route coordinates for captain map displays. |
+
+Both route endpoints take `originLatitude`, `originLongitude`, `destinationLatitude`, and `destinationLongitude` query parameters. The returned route is an array of `[latitude, longitude]` coordinate pairs suitable for drawing a map line.
+
+### Complete ride lifecycle
+
+| Method | Endpoint | Authentication | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/rides/fare?pickup=<place>&destination=<place>` | Rider | Calculate a fare estimate. |
+| `POST` | `/rides/create` | Rider | Create a pending ride request and generate its OTP. |
+| `POST` | `/rides/confirm` | Captain | Assign the captain and accept the ride. Body: `{ "rideId": "..." }`. |
+| `POST` | `/rides/start` | Captain | Verify the OTP and begin the accepted ride. Body: `{ "rideId": "...", "otp": "123456" }`. |
+| `POST` | `/rides/endRide` | Captain | Mark the active ride complete. Body: `{ "rideId": "..." }`. |
+
+When a rider creates a request, the backend geocodes the pickup, searches for nearby captains within a five-kilometer radius, and emits the request to connected captains. If location lookup fails, the ride request itself is still created and the notification search falls back gracefully. Ride state is stored using the statuses `pending`, `accepted`, `ongoing`, `completed`, and `cancelled`.
+
+### Socket.IO events
+
+Socket.IO is attached to the HTTP server in `server.js`. A client joins by emitting `join` with its database ID and role:
+
+```js
+socket.emit("join", { userId: "<database-id>", userType: "user" });
+// Captains use userType: "captain".
+```
+
+Clients send `update_location_user` or `update_location_captain` with a `userId` and `{ latitude, longitude }` location. The backend persists captain coordinates for nearby matching and forwards active-ride coordinates to the other participant.
+
+The server emits these events as the corresponding actions occur:
+
+| Event | Sent to | When |
+| --- | --- | --- |
+| `newRide` | Nearby connected captains | A rider creates a request. |
+| `rideConfirmed` | The rider | A captain accepts the request. |
+| `rideStarted` | The rider | Captain verifies the OTP and starts the trip. |
+| `rideEnded` | The rider | Captain completes the ride. |
+| `captain_live_location` | Rider on an active ride | Captain sends a location update. |
+| `user_live_location` | Captain on an active ride | Rider sends a location update. |
+| `dailyStatsUpdated` | Captain | A completed trip updates the daily summary. |
+
+## Notes about external services
+
+Map requests use the public OpenStreetMap Nominatim geocoding service and public OSRM routing service through Axios. They do not require a project API key in the current implementation, but their availability, usage policy, response times, and results depend on those third-party services. For a deployed system, review their usage policies and use an appropriate hosted provider where needed.

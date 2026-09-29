@@ -23,6 +23,32 @@ The app currently includes user and captain signup/login, protected profile acce
 - React frontend for booking flow and ride status panels
 - Responsive UI with GSAP animations and Leaflet map integration
 
+### Rider features
+
+- Register and sign in with a rider account; protected pages load the rider profile from the API.
+- Search for pickup and destination locations using address suggestions, or choose locations from the map.
+- Use the browser's current location as a pickup when location permission is available.
+- View map routes, distance and time information, and a fare estimate before requesting a ride.
+- Request a car, auto, or moto ride and view the ride's pending, accepted, ongoing, and completed states.
+- Receive captain assignment and live captain location updates while an active ride is in progress.
+- Log out to invalidate the current token.
+
+### Captain features
+
+- Register with personal details and vehicle information, then sign in to a captain account.
+- Go online through the live connection and share location updates.
+- Receive nearby ride requests, review the rider and trip information, and confirm a request.
+- Start an accepted ride by validating the rider's six-digit OTP, then finish the ride.
+- View daily captain activity statistics and receive live ride/location updates.
+
+### Platform behavior
+
+- Store account, vehicle, ride, and revoked-token data in MongoDB through Mongoose.
+- Hash passwords with bcrypt and protect account-specific API operations with JWT middleware.
+- Support JWTs through an authorization header or the `token` cookie; logout blacklists the token.
+- Use OpenStreetMap Nominatim for geocoding, reverse geocoding, and location suggestions; use OSRM for routes and travel estimates.
+- Exchange ride lifecycle events and location updates through Socket.IO.
+
 ## Tech Stack
 
 ### Backend
@@ -180,12 +206,26 @@ http://localhost:5173
 ### Map Routes
 
 - `GET /maps/get-coordinates`
+- `GET /maps/reverse-geocode`
 - `GET /maps/get-distance-time`
 - `GET /maps/get-suggestions`
+- `GET /maps/user/route`
+- `GET /maps/captain/get-coordinates`
+- `GET /maps/captain/route`
+
+Map routes require a valid rider or captain token according to the route. The map services use public OpenStreetMap and OSRM services.
+
+Captain account routes also include `GET /captains/daily-stats`.
 
 ### Ride Routes
 
+- `GET /rides/fare`
 - `POST /rides/create`
+- `POST /rides/confirm`
+- `POST /rides/start`
+- `POST /rides/endRide`
+
+Fare and creation routes require rider authentication. Confirming, starting, and ending a ride require captain authentication. Starting a ride requires the ride ID and the six-digit OTP generated for that request.
 
 ## Authentication Flow
 
@@ -205,6 +245,10 @@ This project is a working full-stack prototype with:
 - backend API services for authentication and ride-related flows
 - frontend screens for user booking and captain-side ride lifecycle states
 - location-based ride request and vehicle selection interactions
+- captain request matching within the configured nearby search radius
+- ride confirmation, OTP-verified start, and ride completion actions
+- Socket.IO events for ride lifecycle changes and live rider/captain location sharing
+- captain online session tracking and daily activity summaries
 
 ## Notes
 
@@ -213,6 +257,8 @@ This project is a working full-stack prototype with:
 - The frontend integrates with the backend APIs for login, signup, map suggestions, and ride creation.
 
 ## Next Improvements
+
+Ride matching, ride status updates, and live map tracking are already part of the current implementation. Further work can focus on:
 
 Possible future enhancements include:
 
