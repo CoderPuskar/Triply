@@ -11,6 +11,11 @@ This repository is organized as a monorepo with two main parts:
 
 The app currently includes user and captain signup/login, protected profile access, location suggestions, distance/time lookup, and ride creation endpoints.
 
+## Deployed Application
+
+- Frontend: [Triply on Vercel](https://triply-git-main-puskarmaity007-gmailcoms-projects.vercel.app/)
+- Backend: Deployed separately on Render
+
 ## Features
 
 - User registration and login
