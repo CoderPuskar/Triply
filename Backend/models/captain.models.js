@@ -59,16 +59,41 @@ const captainSchema = new mongoose.Schema({
     },
   },
 
+  // geoLocation: {
+  //   type: {
+  //     type: String,
+  //     enum: ["Point"],
+  //     default: "Point",
+  //   },
+  //   coordinates: {
+  //     type: [Number],
+  //   },
+  // },
   geoLocation: {
-    type: {
-      type: String,
-      enum: ["Point"],
-      default: "Point",
-    },
-    coordinates: {
-      type: [Number],
+  type: {
+    type: String,
+    enum: ["Point"],
+  },
+  coordinates: {
+    type: [Number],
+    default: undefined,
+    validate: {
+      validator: function (coordinates) {
+        if (coordinates == null) return true;
+
+        return (
+          coordinates.length === 2 &&
+          coordinates.every(Number.isFinite) &&
+          coordinates[0] >= -180 &&
+          coordinates[0] <= 180 &&
+          coordinates[1] >= -90 &&
+          coordinates[1] <= 90
+        );
+      },
+      message: "Invalid GeoJSON coordinates",
     },
   },
+},
 
   email: {
     type: String,
